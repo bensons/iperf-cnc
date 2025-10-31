@@ -94,8 +94,6 @@ build/
 *.so.*
 
 # Executables
-*.exe
-*.out
 *.app
 *.i*86
 *.x86_64
@@ -117,7 +115,6 @@ Mkfile.old
 dkms.conf
 
 # C build directories
-build/
 Build/
 BUILD/
 
@@ -132,8 +129,6 @@ Makefile
 # Autotools
 .deps/
 .libs/
-*.la
-*.lo
 Makefile.in
 /ar-lib
 /compile
