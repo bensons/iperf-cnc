@@ -1,3 +1,26 @@
+# AI Coding Agent Files
+# GitHub Copilot
+.copilot/
+copilot-context.md
+
+# Cursor
+.cursor/
+.cursorrules
+
+# Cody
+.cody/
+
+# Amazon Q
+.aws-q/
+
+# Tabnine
+.tabnine/
+
+# Other AI assistants
+.ai/
+.aider*
+.gpt-cache/
+
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
 #
@@ -27,6 +50,105 @@ go.work.sum
 # env file
 .env
 
+# Build artifacts
+bin/
+dist/
+build/
+
 # Editor/IDE
 # .idea/
 # .vscode/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# C Development Files
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.so.*
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+# C build directories
+build/
+Build/
+BUILD/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Autotools
+.deps/
+.libs/
+*.la
+*.lo
+Makefile.in
+/ar-lib
+/compile
+/config.guess
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config.sub
+/configure
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/stamp-h1
+/aclocal.m4
+autom4te.cache/
