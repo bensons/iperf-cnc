@@ -20,6 +20,21 @@ copilot-context.md
 .ai/
 .aider*
 .gpt-cache/
+.augment/
+.continue/
+.github/copilot-instructions.md
+.sourcegraph/
+.windsurf/
+CASCADE.md
+CLAUDE.md
+AGENT.md
+.cascade/
+.agent/
+*.agent.md
+*.claude.md
+.claudeconfig
+.claudehistory
+.claudesession
 
 # If you prefer the allow list template instead of the deny list, see community template:
 # https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
