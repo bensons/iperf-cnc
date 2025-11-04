@@ -1,0 +1,13 @@
+daemon:
+  listen_port: 50051
+  port_range:
+    start: 5201
+    end: 5400
+  max_processes: 200
+  cpu_affinity: true
+  log_level: info
+  result_dir: /var/lib/iperf-cnc/results
+  timeout:
+    process_start_seconds: 30
+    process_stop_seconds: 10
+    test_execution_seconds: 300

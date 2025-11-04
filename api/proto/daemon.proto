@@ -1,0 +1,199 @@
+syntax = "proto3";
+
+package iperf.daemon.v1;
+
+option go_package = "github.com/bensons/iperf-cnc/api/proto/daemon/v1;daemonv1";
+
+// DaemonService is the main gRPC service for the iperf daemon
+service DaemonService {
+  // Initialize prepares the daemon with configuration
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+
+  // PrepareTest validates if the daemon can handle the test topology
+  rpc PrepareTest(PrepareTestRequest) returns (PrepareTestResponse);
+
+  // StartServers starts iperf3 servers on allocated ports
+  rpc StartServers(StartServersRequest) returns (StartServersResponse);
+
+  // StartClients starts iperf3 clients to connect to targets
+  rpc StartClients(StartClientsRequest) returns (StartClientsResponse);
+
+  // StopAll stops all running iperf3 processes
+  rpc StopAll(StopAllRequest) returns (StopAllResponse);
+
+  // GetResults retrieves test results from completed runs
+  rpc GetResults(GetResultsRequest) returns (GetResultsResponse);
+
+  // GetStatus returns current daemon health and resource usage
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+// ProcessCapacity represents the daemon's ability to run processes
+message ProcessCapacity {
+  int32 max_processes = 1;
+  int32 available_processes = 2;
+  int32 cpu_cores = 3;
+  int64 available_memory_bytes = 4;
+  repeated string network_interfaces = 5;
+}
+
+// NodeInfo represents information about a node in the cluster
+message NodeInfo {
+  string id = 1;
+  string hostname = 2;
+  string ip = 3;
+  int32 port = 4;
+  ProcessCapacity capacity = 5;
+}
+
+// TestProfile contains all iperf3 parameters for a test
+message TestProfile {
+  string name = 1;
+  int32 duration_seconds = 2;
+  string bandwidth = 3;  // e.g., "10G", "100M", "0" for unlimited
+  string window_size = 4; // e.g., "416K"
+  int32 parallel_streams = 5;
+  bool bidirectional = 6;
+  bool reverse = 7;
+  int32 buffer_length = 8;
+  string congestion_control = 9; // e.g., "cubic", "bbr"
+  int32 mss = 10; // Maximum segment size
+  bool no_delay = 11; // TCP no delay
+  int32 tos = 12; // Type of service
+  bool zerocopy = 13;
+  int32 omit_seconds = 14; // Seconds to omit at start
+  string json_output = 15; // JSON output mode
+  map<string, string> extra_flags = 16; // Additional iperf3 flags
+}
+
+// TestPair represents a source-destination pair for testing
+message TestPair {
+  string source_id = 1;
+  string destination_id = 2;
+  string destination_ip = 3;
+  int32 destination_port = 4;
+  TestProfile profile = 5;
+}
+
+// TestTopology contains all test pairs for a node
+message TestTopology {
+  repeated TestPair server_assignments = 1; // Tests where this node is server
+  repeated TestPair client_assignments = 2; // Tests where this node is client
+}
+
+// TestStatus represents the current state of a test
+enum TestStatus {
+  TEST_STATUS_UNSPECIFIED = 0;
+  TEST_STATUS_PENDING = 1;
+  TEST_STATUS_RUNNING = 2;
+  TEST_STATUS_COMPLETED = 3;
+  TEST_STATUS_FAILED = 4;
+}
+
+// TestResult contains the output from an iperf3 run
+message TestResult {
+  string test_id = 1;
+  string source_id = 2;
+  string destination_id = 3;
+  TestStatus status = 4;
+  string iperf_json = 5; // Raw iperf3 JSON output
+  string error_message = 6;
+  int64 start_time_unix = 7;
+  int64 end_time_unix = 8;
+  int32 exit_code = 9;
+}
+
+// DaemonStatus represents daemon health and resource usage
+message DaemonStatus {
+  bool healthy = 1;
+  int32 running_processes = 2;
+  int32 completed_tests = 3;
+  int32 failed_tests = 4;
+  ProcessCapacity current_capacity = 5;
+  int64 uptime_seconds = 6;
+  string version = 7;
+}
+
+// Request/Response messages
+
+message InitializeRequest {
+  int32 port_range_start = 1;
+  int32 port_range_end = 2;
+  int32 max_processes = 3;
+  bool cpu_affinity = 4;
+  string log_level = 5;
+  string result_dir = 6;
+}
+
+message InitializeResponse {
+  bool success = 1;
+  string message = 2;
+  NodeInfo node_info = 3;
+}
+
+message PrepareTestRequest {
+  TestTopology topology = 1;
+}
+
+message PrepareTestResponse {
+  bool can_handle = 1;
+  string message = 2;
+  ProcessCapacity required_capacity = 3;
+  ProcessCapacity available_capacity = 4;
+}
+
+message StartServersRequest {
+  repeated int32 ports = 1;
+  int32 timeout_seconds = 2;
+}
+
+message StartServersResponse {
+  bool success = 1;
+  string message = 2;
+  repeated int32 started_ports = 3;
+  repeated string errors = 4;
+}
+
+message ClientTarget {
+  string test_id = 1;
+  string destination_ip = 2;
+  int32 destination_port = 3;
+  TestProfile profile = 4;
+}
+
+message StartClientsRequest {
+  repeated ClientTarget targets = 1;
+}
+
+message StartClientsResponse {
+  bool success = 1;
+  string message = 2;
+  repeated string started_test_ids = 3;
+  repeated string errors = 4;
+}
+
+message StopAllRequest {
+  bool force = 1;
+}
+
+message StopAllResponse {
+  bool success = 1;
+  string message = 2;
+  int32 stopped_processes = 3;
+}
+
+message GetResultsRequest {
+  repeated string test_ids = 1; // Empty means all results
+  bool clear_after_retrieval = 2;
+}
+
+message GetResultsResponse {
+  repeated TestResult results = 1;
+  int32 total_count = 2;
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  DaemonStatus status = 1;
+}

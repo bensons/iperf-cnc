@@ -1,0 +1,101 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Reports suspicious constructs
+    - ineffassign   # Detects unused assignments
+    - staticcheck   # Go static analysis
+    - unused        # Checks for unused code
+    - gofmt         # Check code formatting
+    - goimports     # Check import formatting
+    - misspell      # Check for misspelled words
+    - unconvert     # Remove unnecessary type conversions
+    - goconst       # Find repeated strings that could be constants
+    - gocyclo       # Check cyclomatic complexity
+    - gosec         # Security checks
+    - revive        # Drop-in replacement for golint
+    - bodyclose     # Check HTTP response body is closed
+    - errname       # Check error naming
+    - exportloopref # Check for pointers to loop variables
+    - godot         # Check comments end in period
+    - nilerr        # Find code returning nil even if it checks err != nil
+    - nolintlint    # Reports ill-formed or insufficient nolint directives
+    - prealloc      # Find slice declarations that could be preallocated
+    - predeclared   # Find code that shadows predeclared identifiers
+    - whitespace    # Check for unnecessary whitespace
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+
+  govet:
+    check-shadowing: true
+    enable-all: true
+
+  gocyclo:
+    min-complexity: 15
+
+  gosec:
+    severity: medium
+    confidence: medium
+
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+  gofmt:
+    simplify: true
+
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - gosec
+        - goconst
+
+    # Exclude known issues in generated code
+    - path: api/proto/
+      linters:
+        - all
+
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

@@ -1,0 +1,56 @@
+controller:
+  nodes:
+    - hostname: node1.example.com
+      ip: 192.168.1.10
+      port: 50051
+    - hostname: node2.example.com
+      ip: 192.168.1.11
+      port: 50051
+    - hostname: node3.example.com
+      ip: 192.168.1.12
+      port: 50051
+
+  test_profiles:
+    default:
+      duration: 10
+      parallel: 4
+      bidirectional: true
+      no_delay: false
+      zerocopy: false
+
+    high_bandwidth:
+      duration: 30
+      bandwidth: "10G"
+      window_size: "416K"
+      parallel: 8
+      bidirectional: true
+      no_delay: true
+      zerocopy: true
+
+    low_latency:
+      duration: 10
+      parallel: 1
+      bidirectional: false
+      no_delay: true
+      buffer_length: 128
+      omit_seconds: 2
+
+  topology:
+    type: full_mesh
+    default_profile: default
+    overrides:
+      - nodes: [node1, node2]
+        profile: high_bandwidth
+
+  output:
+    json_file: results.json
+    csv_file: results.csv
+    schema_file: schema.json
+    compress: false
+
+  concurrency:
+    max_concurrent_nodes: 100
+    max_concurrent_tests: 1000
+    client_start_batch_size: 50
+    connection_timeout_seconds: 10
+    rpc_timeout_seconds: 60

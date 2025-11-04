@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+
+    - name: Install protoc
+      run: |
+        PROTOC_VERSION=25.1
+        curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
+        unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d $HOME/protoc
+        echo "$HOME/protoc/bin" >> $GITHUB_PATH
+
+    - name: Install protoc plugins
+      run: |
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Generate protobuf code
+      run: make proto
+
+    - name: Run tests
+      run: make test
+
+    - name: Run tests with race detector
+      run: make test-race
+
+    - name: Generate coverage report
+      if: matrix.go-version == '1.22'
+      run: make test-coverage
+
+    - name: Upload coverage to Codecov
+      if: matrix.go-version == '1.22'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.out
+        flags: unittests
+        name: codecov-umbrella
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Install protoc
+      run: |
+        PROTOC_VERSION=25.1
+        curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
+        unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d $HOME/protoc
+        echo "$HOME/protoc/bin" >> $GITHUB_PATH
+
+    - name: Install protoc plugins
+      run: |
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Generate protobuf code
+      run: make proto
+
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: latest
+        args: --timeout=5m
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+
+    - name: Install protoc
+      run: |
+        PROTOC_VERSION=25.1
+        curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip
+        unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d $HOME/protoc
+        echo "$HOME/protoc/bin" >> $GITHUB_PATH
+
+    - name: Install protoc plugins
+      run: |
+        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+    - name: Download dependencies
+      run: make deps
+
+    - name: Generate protobuf code
+      run: make proto
+
+    - name: Build binaries
+      run: make build
+
+    - name: Upload daemon binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: iperf-daemon-${{ github.sha }}
+        path: build/iperf-daemon
+
+    - name: Upload controller binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: iperf-controller-${{ github.sha }}
+        path: build/iperf-controller
