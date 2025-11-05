@@ -124,13 +124,18 @@ build/
 *.pdb
 
 # Kernel Module Compile Results
-*.mod*
+*.mod
+*.mod.c
 *.cmd
 .tmp_versions/
 modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# But don't ignore Go module files
+!go.mod
+!go.sum
 
 # C build directories
 Build/
