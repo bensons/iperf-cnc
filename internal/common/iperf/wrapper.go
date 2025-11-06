@@ -19,9 +19,20 @@ const (
 	ModeClient Mode = "client"
 )
 
+// Protocol represents the transport protocol
+type Protocol string
+
+const (
+	// ProtocolTCP represents TCP protocol
+	ProtocolTCP Protocol = "tcp"
+	// ProtocolUDP represents UDP protocol
+	ProtocolUDP Protocol = "udp"
+)
+
 // Config contains iperf3 execution configuration
 type Config struct {
 	Mode              Mode
+	Protocol          Protocol // TCP or UDP (default: TCP)
 	Port              int
 	Host              string // For client mode
 	Duration          int
@@ -31,9 +42,9 @@ type Config struct {
 	Bidirectional     bool
 	Reverse           bool
 	BufferLength      int
-	CongestionControl string
-	MSS               int
-	NoDelay           bool
+	CongestionControl string // TCP only
+	MSS               int    // TCP only
+	NoDelay           bool   // TCP only
 	TOS               int
 	ZeroCopy          bool
 	OmitSeconds       int
@@ -73,6 +84,11 @@ func (w *Wrapper) BuildCommand(config *Config) ([]string, error) {
 	}
 
 	args := make([]string, 0)
+
+	// Protocol (UDP requires -u flag, TCP is default)
+	if config.Protocol == ProtocolUDP {
+		args = append(args, "-u")
+	}
 
 	// Mode
 	switch config.Mode {
@@ -116,18 +132,18 @@ func (w *Wrapper) BuildCommand(config *Config) ([]string, error) {
 			args = append(args, "-l", fmt.Sprintf("%d", config.BufferLength))
 		}
 
-		// Congestion control
-		if config.CongestionControl != "" {
+		// Congestion control (TCP only)
+		if config.Protocol != ProtocolUDP && config.CongestionControl != "" {
 			args = append(args, "-C", config.CongestionControl)
 		}
 
-		// MSS
-		if config.MSS > 0 {
+		// MSS (TCP only)
+		if config.Protocol != ProtocolUDP && config.MSS > 0 {
 			args = append(args, "-M", fmt.Sprintf("%d", config.MSS))
 		}
 
-		// No delay
-		if config.NoDelay {
+		// No delay (TCP only)
+		if config.Protocol != ProtocolUDP && config.NoDelay {
 			args = append(args, "-N")
 		}
 

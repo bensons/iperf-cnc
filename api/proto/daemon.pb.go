@@ -21,6 +21,56 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Protocol represents the transport protocol for iperf3 tests
+type Protocol int32
+
+const (
+	Protocol_PROTOCOL_UNSPECIFIED Protocol = 0
+	Protocol_PROTOCOL_TCP         Protocol = 1
+	Protocol_PROTOCOL_UDP         Protocol = 2
+)
+
+// Enum value maps for Protocol.
+var (
+	Protocol_name = map[int32]string{
+		0: "PROTOCOL_UNSPECIFIED",
+		1: "PROTOCOL_TCP",
+		2: "PROTOCOL_UDP",
+	}
+	Protocol_value = map[string]int32{
+		"PROTOCOL_UNSPECIFIED": 0,
+		"PROTOCOL_TCP":         1,
+		"PROTOCOL_UDP":         2,
+	}
+)
+
+func (x Protocol) Enum() *Protocol {
+	p := new(Protocol)
+	*p = x
+	return p
+}
+
+func (x Protocol) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Protocol) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_proto_daemon_proto_enumTypes[0].Descriptor()
+}
+
+func (Protocol) Type() protoreflect.EnumType {
+	return &file_api_proto_daemon_proto_enumTypes[0]
+}
+
+func (x Protocol) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Protocol.Descriptor instead.
+func (Protocol) EnumDescriptor() ([]byte, []int) {
+	return file_api_proto_daemon_proto_rawDescGZIP(), []int{0}
+}
+
 // TestStatus represents the current state of a test
 type TestStatus int32
 
@@ -61,11 +111,11 @@ func (x TestStatus) String() string {
 }
 
 func (TestStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_proto_daemon_proto_enumTypes[0].Descriptor()
+	return file_api_proto_daemon_proto_enumTypes[1].Descriptor()
 }
 
 func (TestStatus) Type() protoreflect.EnumType {
-	return &file_api_proto_daemon_proto_enumTypes[0]
+	return &file_api_proto_daemon_proto_enumTypes[1]
 }
 
 func (x TestStatus) Number() protoreflect.EnumNumber {
@@ -74,7 +124,7 @@ func (x TestStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use TestStatus.Descriptor instead.
 func (TestStatus) EnumDescriptor() ([]byte, []int) {
-	return file_api_proto_daemon_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_daemon_proto_rawDescGZIP(), []int{1}
 }
 
 // ProcessCapacity represents the daemon's ability to run processes
@@ -236,20 +286,21 @@ type TestProfile struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	DurationSeconds   int32                  `protobuf:"varint,2,opt,name=duration_seconds,json=durationSeconds,proto3" json:"duration_seconds,omitempty"`
-	Bandwidth         string                 `protobuf:"bytes,3,opt,name=bandwidth,proto3" json:"bandwidth,omitempty"`                     // e.g., "10G", "100M", "0" for unlimited
-	WindowSize        string                 `protobuf:"bytes,4,opt,name=window_size,json=windowSize,proto3" json:"window_size,omitempty"` // e.g., "416K"
-	ParallelStreams   int32                  `protobuf:"varint,5,opt,name=parallel_streams,json=parallelStreams,proto3" json:"parallel_streams,omitempty"`
-	Bidirectional     bool                   `protobuf:"varint,6,opt,name=bidirectional,proto3" json:"bidirectional,omitempty"`
-	Reverse           bool                   `protobuf:"varint,7,opt,name=reverse,proto3" json:"reverse,omitempty"`
-	BufferLength      int32                  `protobuf:"varint,8,opt,name=buffer_length,json=bufferLength,proto3" json:"buffer_length,omitempty"`
-	CongestionControl string                 `protobuf:"bytes,9,opt,name=congestion_control,json=congestionControl,proto3" json:"congestion_control,omitempty"` // e.g., "cubic", "bbr"
-	Mss               int32                  `protobuf:"varint,10,opt,name=mss,proto3" json:"mss,omitempty"`                                                    // Maximum segment size
-	NoDelay           bool                   `protobuf:"varint,11,opt,name=no_delay,json=noDelay,proto3" json:"no_delay,omitempty"`                             // TCP no delay
-	Tos               int32                  `protobuf:"varint,12,opt,name=tos,proto3" json:"tos,omitempty"`                                                    // Type of service
-	Zerocopy          bool                   `protobuf:"varint,13,opt,name=zerocopy,proto3" json:"zerocopy,omitempty"`
-	OmitSeconds       int32                  `protobuf:"varint,14,opt,name=omit_seconds,json=omitSeconds,proto3" json:"omit_seconds,omitempty"`                                                                       // Seconds to omit at start
-	JsonOutput        string                 `protobuf:"bytes,15,opt,name=json_output,json=jsonOutput,proto3" json:"json_output,omitempty"`                                                                           // JSON output mode
-	ExtraFlags        map[string]string      `protobuf:"bytes,16,rep,name=extra_flags,json=extraFlags,proto3" json:"extra_flags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional iperf3 flags
+	Protocol          Protocol               `protobuf:"varint,3,opt,name=protocol,proto3,enum=iperf.daemon.v1.Protocol" json:"protocol,omitempty"` // TCP or UDP
+	Bandwidth         string                 `protobuf:"bytes,4,opt,name=bandwidth,proto3" json:"bandwidth,omitempty"`                              // e.g., "10G", "100M", "0" for unlimited
+	WindowSize        string                 `protobuf:"bytes,5,opt,name=window_size,json=windowSize,proto3" json:"window_size,omitempty"`          // e.g., "416K"
+	ParallelStreams   int32                  `protobuf:"varint,6,opt,name=parallel_streams,json=parallelStreams,proto3" json:"parallel_streams,omitempty"`
+	Bidirectional     bool                   `protobuf:"varint,7,opt,name=bidirectional,proto3" json:"bidirectional,omitempty"`
+	Reverse           bool                   `protobuf:"varint,8,opt,name=reverse,proto3" json:"reverse,omitempty"`
+	BufferLength      int32                  `protobuf:"varint,9,opt,name=buffer_length,json=bufferLength,proto3" json:"buffer_length,omitempty"`
+	CongestionControl string                 `protobuf:"bytes,10,opt,name=congestion_control,json=congestionControl,proto3" json:"congestion_control,omitempty"` // e.g., "cubic", "bbr" (TCP only)
+	Mss               int32                  `protobuf:"varint,11,opt,name=mss,proto3" json:"mss,omitempty"`                                                     // Maximum segment size (TCP only)
+	NoDelay           bool                   `protobuf:"varint,12,opt,name=no_delay,json=noDelay,proto3" json:"no_delay,omitempty"`                              // TCP no delay (TCP only)
+	Tos               int32                  `protobuf:"varint,13,opt,name=tos,proto3" json:"tos,omitempty"`                                                     // Type of service
+	Zerocopy          bool                   `protobuf:"varint,14,opt,name=zerocopy,proto3" json:"zerocopy,omitempty"`
+	OmitSeconds       int32                  `protobuf:"varint,15,opt,name=omit_seconds,json=omitSeconds,proto3" json:"omit_seconds,omitempty"`                                                                       // Seconds to omit at start
+	JsonOutput        string                 `protobuf:"bytes,16,opt,name=json_output,json=jsonOutput,proto3" json:"json_output,omitempty"`                                                                           // JSON output mode
+	ExtraFlags        map[string]string      `protobuf:"bytes,17,rep,name=extra_flags,json=extraFlags,proto3" json:"extra_flags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional iperf3 flags
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -296,6 +347,13 @@ func (x *TestProfile) GetDurationSeconds() int32 {
 		return x.DurationSeconds
 	}
 	return 0
+}
+
+func (x *TestProfile) GetProtocol() Protocol {
+	if x != nil {
+		return x.Protocol
+	}
+	return Protocol_PROTOCOL_UNSPECIFIED
 }
 
 func (x *TestProfile) GetBandwidth() string {
@@ -1588,27 +1646,28 @@ const file_api_proto_daemon_proto_rawDesc = "" +
 	"\bhostname\x18\x02 \x01(\tR\bhostname\x12\x0e\n" +
 	"\x02ip\x18\x03 \x01(\tR\x02ip\x12\x12\n" +
 	"\x04port\x18\x04 \x01(\x05R\x04port\x12<\n" +
-	"\bcapacity\x18\x05 \x01(\v2 .iperf.daemon.v1.ProcessCapacityR\bcapacity\"\xf7\x04\n" +
+	"\bcapacity\x18\x05 \x01(\v2 .iperf.daemon.v1.ProcessCapacityR\bcapacity\"\xae\x05\n" +
 	"\vTestProfile\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12)\n" +
-	"\x10duration_seconds\x18\x02 \x01(\x05R\x0fdurationSeconds\x12\x1c\n" +
-	"\tbandwidth\x18\x03 \x01(\tR\tbandwidth\x12\x1f\n" +
-	"\vwindow_size\x18\x04 \x01(\tR\n" +
+	"\x10duration_seconds\x18\x02 \x01(\x05R\x0fdurationSeconds\x125\n" +
+	"\bprotocol\x18\x03 \x01(\x0e2\x19.iperf.daemon.v1.ProtocolR\bprotocol\x12\x1c\n" +
+	"\tbandwidth\x18\x04 \x01(\tR\tbandwidth\x12\x1f\n" +
+	"\vwindow_size\x18\x05 \x01(\tR\n" +
 	"windowSize\x12)\n" +
-	"\x10parallel_streams\x18\x05 \x01(\x05R\x0fparallelStreams\x12$\n" +
-	"\rbidirectional\x18\x06 \x01(\bR\rbidirectional\x12\x18\n" +
-	"\areverse\x18\a \x01(\bR\areverse\x12#\n" +
-	"\rbuffer_length\x18\b \x01(\x05R\fbufferLength\x12-\n" +
-	"\x12congestion_control\x18\t \x01(\tR\x11congestionControl\x12\x10\n" +
-	"\x03mss\x18\n" +
-	" \x01(\x05R\x03mss\x12\x19\n" +
-	"\bno_delay\x18\v \x01(\bR\anoDelay\x12\x10\n" +
-	"\x03tos\x18\f \x01(\x05R\x03tos\x12\x1a\n" +
-	"\bzerocopy\x18\r \x01(\bR\bzerocopy\x12!\n" +
-	"\fomit_seconds\x18\x0e \x01(\x05R\vomitSeconds\x12\x1f\n" +
-	"\vjson_output\x18\x0f \x01(\tR\n" +
+	"\x10parallel_streams\x18\x06 \x01(\x05R\x0fparallelStreams\x12$\n" +
+	"\rbidirectional\x18\a \x01(\bR\rbidirectional\x12\x18\n" +
+	"\areverse\x18\b \x01(\bR\areverse\x12#\n" +
+	"\rbuffer_length\x18\t \x01(\x05R\fbufferLength\x12-\n" +
+	"\x12congestion_control\x18\n" +
+	" \x01(\tR\x11congestionControl\x12\x10\n" +
+	"\x03mss\x18\v \x01(\x05R\x03mss\x12\x19\n" +
+	"\bno_delay\x18\f \x01(\bR\anoDelay\x12\x10\n" +
+	"\x03tos\x18\r \x01(\x05R\x03tos\x12\x1a\n" +
+	"\bzerocopy\x18\x0e \x01(\bR\bzerocopy\x12!\n" +
+	"\fomit_seconds\x18\x0f \x01(\x05R\vomitSeconds\x12\x1f\n" +
+	"\vjson_output\x18\x10 \x01(\tR\n" +
 	"jsonOutput\x12M\n" +
-	"\vextra_flags\x18\x10 \x03(\v2,.iperf.daemon.v1.TestProfile.ExtraFlagsEntryR\n" +
+	"\vextra_flags\x18\x11 \x03(\v2,.iperf.daemon.v1.TestProfile.ExtraFlagsEntryR\n" +
 	"extraFlags\x1a=\n" +
 	"\x0fExtraFlagsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
@@ -1697,7 +1756,11 @@ const file_api_proto_daemon_proto_rawDesc = "" +
 	"totalCount\"\x12\n" +
 	"\x10GetStatusRequest\"J\n" +
 	"\x11GetStatusResponse\x125\n" +
-	"\x06status\x18\x01 \x01(\v2\x1d.iperf.daemon.v1.DaemonStatusR\x06status*\x8e\x01\n" +
+	"\x06status\x18\x01 \x01(\v2\x1d.iperf.daemon.v1.DaemonStatusR\x06status*H\n" +
+	"\bProtocol\x12\x18\n" +
+	"\x14PROTOCOL_UNSPECIFIED\x10\x00\x12\x10\n" +
+	"\fPROTOCOL_TCP\x10\x01\x12\x10\n" +
+	"\fPROTOCOL_UDP\x10\x02*\x8e\x01\n" +
 	"\n" +
 	"TestStatus\x12\x1b\n" +
 	"\x17TEST_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
@@ -1728,69 +1791,71 @@ func file_api_proto_daemon_proto_rawDescGZIP() []byte {
 	return file_api_proto_daemon_proto_rawDescData
 }
 
-var file_api_proto_daemon_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_api_proto_daemon_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_api_proto_daemon_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_api_proto_daemon_proto_goTypes = []any{
-	(TestStatus)(0),              // 0: iperf.daemon.v1.TestStatus
-	(*ProcessCapacity)(nil),      // 1: iperf.daemon.v1.ProcessCapacity
-	(*NodeInfo)(nil),             // 2: iperf.daemon.v1.NodeInfo
-	(*TestProfile)(nil),          // 3: iperf.daemon.v1.TestProfile
-	(*TestPair)(nil),             // 4: iperf.daemon.v1.TestPair
-	(*TestTopology)(nil),         // 5: iperf.daemon.v1.TestTopology
-	(*TestResult)(nil),           // 6: iperf.daemon.v1.TestResult
-	(*DaemonStatus)(nil),         // 7: iperf.daemon.v1.DaemonStatus
-	(*InitializeRequest)(nil),    // 8: iperf.daemon.v1.InitializeRequest
-	(*InitializeResponse)(nil),   // 9: iperf.daemon.v1.InitializeResponse
-	(*PrepareTestRequest)(nil),   // 10: iperf.daemon.v1.PrepareTestRequest
-	(*PrepareTestResponse)(nil),  // 11: iperf.daemon.v1.PrepareTestResponse
-	(*StartServersRequest)(nil),  // 12: iperf.daemon.v1.StartServersRequest
-	(*StartServersResponse)(nil), // 13: iperf.daemon.v1.StartServersResponse
-	(*ClientTarget)(nil),         // 14: iperf.daemon.v1.ClientTarget
-	(*StartClientsRequest)(nil),  // 15: iperf.daemon.v1.StartClientsRequest
-	(*StartClientsResponse)(nil), // 16: iperf.daemon.v1.StartClientsResponse
-	(*StopAllRequest)(nil),       // 17: iperf.daemon.v1.StopAllRequest
-	(*StopAllResponse)(nil),      // 18: iperf.daemon.v1.StopAllResponse
-	(*GetResultsRequest)(nil),    // 19: iperf.daemon.v1.GetResultsRequest
-	(*GetResultsResponse)(nil),   // 20: iperf.daemon.v1.GetResultsResponse
-	(*GetStatusRequest)(nil),     // 21: iperf.daemon.v1.GetStatusRequest
-	(*GetStatusResponse)(nil),    // 22: iperf.daemon.v1.GetStatusResponse
-	nil,                          // 23: iperf.daemon.v1.TestProfile.ExtraFlagsEntry
+	(Protocol)(0),                // 0: iperf.daemon.v1.Protocol
+	(TestStatus)(0),              // 1: iperf.daemon.v1.TestStatus
+	(*ProcessCapacity)(nil),      // 2: iperf.daemon.v1.ProcessCapacity
+	(*NodeInfo)(nil),             // 3: iperf.daemon.v1.NodeInfo
+	(*TestProfile)(nil),          // 4: iperf.daemon.v1.TestProfile
+	(*TestPair)(nil),             // 5: iperf.daemon.v1.TestPair
+	(*TestTopology)(nil),         // 6: iperf.daemon.v1.TestTopology
+	(*TestResult)(nil),           // 7: iperf.daemon.v1.TestResult
+	(*DaemonStatus)(nil),         // 8: iperf.daemon.v1.DaemonStatus
+	(*InitializeRequest)(nil),    // 9: iperf.daemon.v1.InitializeRequest
+	(*InitializeResponse)(nil),   // 10: iperf.daemon.v1.InitializeResponse
+	(*PrepareTestRequest)(nil),   // 11: iperf.daemon.v1.PrepareTestRequest
+	(*PrepareTestResponse)(nil),  // 12: iperf.daemon.v1.PrepareTestResponse
+	(*StartServersRequest)(nil),  // 13: iperf.daemon.v1.StartServersRequest
+	(*StartServersResponse)(nil), // 14: iperf.daemon.v1.StartServersResponse
+	(*ClientTarget)(nil),         // 15: iperf.daemon.v1.ClientTarget
+	(*StartClientsRequest)(nil),  // 16: iperf.daemon.v1.StartClientsRequest
+	(*StartClientsResponse)(nil), // 17: iperf.daemon.v1.StartClientsResponse
+	(*StopAllRequest)(nil),       // 18: iperf.daemon.v1.StopAllRequest
+	(*StopAllResponse)(nil),      // 19: iperf.daemon.v1.StopAllResponse
+	(*GetResultsRequest)(nil),    // 20: iperf.daemon.v1.GetResultsRequest
+	(*GetResultsResponse)(nil),   // 21: iperf.daemon.v1.GetResultsResponse
+	(*GetStatusRequest)(nil),     // 22: iperf.daemon.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),    // 23: iperf.daemon.v1.GetStatusResponse
+	nil,                          // 24: iperf.daemon.v1.TestProfile.ExtraFlagsEntry
 }
 var file_api_proto_daemon_proto_depIdxs = []int32{
-	1,  // 0: iperf.daemon.v1.NodeInfo.capacity:type_name -> iperf.daemon.v1.ProcessCapacity
-	23, // 1: iperf.daemon.v1.TestProfile.extra_flags:type_name -> iperf.daemon.v1.TestProfile.ExtraFlagsEntry
-	3,  // 2: iperf.daemon.v1.TestPair.profile:type_name -> iperf.daemon.v1.TestProfile
-	4,  // 3: iperf.daemon.v1.TestTopology.server_assignments:type_name -> iperf.daemon.v1.TestPair
-	4,  // 4: iperf.daemon.v1.TestTopology.client_assignments:type_name -> iperf.daemon.v1.TestPair
-	0,  // 5: iperf.daemon.v1.TestResult.status:type_name -> iperf.daemon.v1.TestStatus
-	1,  // 6: iperf.daemon.v1.DaemonStatus.current_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
-	2,  // 7: iperf.daemon.v1.InitializeResponse.node_info:type_name -> iperf.daemon.v1.NodeInfo
-	5,  // 8: iperf.daemon.v1.PrepareTestRequest.topology:type_name -> iperf.daemon.v1.TestTopology
-	1,  // 9: iperf.daemon.v1.PrepareTestResponse.required_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
-	1,  // 10: iperf.daemon.v1.PrepareTestResponse.available_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
-	3,  // 11: iperf.daemon.v1.ClientTarget.profile:type_name -> iperf.daemon.v1.TestProfile
-	14, // 12: iperf.daemon.v1.StartClientsRequest.targets:type_name -> iperf.daemon.v1.ClientTarget
-	6,  // 13: iperf.daemon.v1.GetResultsResponse.results:type_name -> iperf.daemon.v1.TestResult
-	7,  // 14: iperf.daemon.v1.GetStatusResponse.status:type_name -> iperf.daemon.v1.DaemonStatus
-	8,  // 15: iperf.daemon.v1.DaemonService.Initialize:input_type -> iperf.daemon.v1.InitializeRequest
-	10, // 16: iperf.daemon.v1.DaemonService.PrepareTest:input_type -> iperf.daemon.v1.PrepareTestRequest
-	12, // 17: iperf.daemon.v1.DaemonService.StartServers:input_type -> iperf.daemon.v1.StartServersRequest
-	15, // 18: iperf.daemon.v1.DaemonService.StartClients:input_type -> iperf.daemon.v1.StartClientsRequest
-	17, // 19: iperf.daemon.v1.DaemonService.StopAll:input_type -> iperf.daemon.v1.StopAllRequest
-	19, // 20: iperf.daemon.v1.DaemonService.GetResults:input_type -> iperf.daemon.v1.GetResultsRequest
-	21, // 21: iperf.daemon.v1.DaemonService.GetStatus:input_type -> iperf.daemon.v1.GetStatusRequest
-	9,  // 22: iperf.daemon.v1.DaemonService.Initialize:output_type -> iperf.daemon.v1.InitializeResponse
-	11, // 23: iperf.daemon.v1.DaemonService.PrepareTest:output_type -> iperf.daemon.v1.PrepareTestResponse
-	13, // 24: iperf.daemon.v1.DaemonService.StartServers:output_type -> iperf.daemon.v1.StartServersResponse
-	16, // 25: iperf.daemon.v1.DaemonService.StartClients:output_type -> iperf.daemon.v1.StartClientsResponse
-	18, // 26: iperf.daemon.v1.DaemonService.StopAll:output_type -> iperf.daemon.v1.StopAllResponse
-	20, // 27: iperf.daemon.v1.DaemonService.GetResults:output_type -> iperf.daemon.v1.GetResultsResponse
-	22, // 28: iperf.daemon.v1.DaemonService.GetStatus:output_type -> iperf.daemon.v1.GetStatusResponse
-	22, // [22:29] is the sub-list for method output_type
-	15, // [15:22] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	2,  // 0: iperf.daemon.v1.NodeInfo.capacity:type_name -> iperf.daemon.v1.ProcessCapacity
+	0,  // 1: iperf.daemon.v1.TestProfile.protocol:type_name -> iperf.daemon.v1.Protocol
+	24, // 2: iperf.daemon.v1.TestProfile.extra_flags:type_name -> iperf.daemon.v1.TestProfile.ExtraFlagsEntry
+	4,  // 3: iperf.daemon.v1.TestPair.profile:type_name -> iperf.daemon.v1.TestProfile
+	5,  // 4: iperf.daemon.v1.TestTopology.server_assignments:type_name -> iperf.daemon.v1.TestPair
+	5,  // 5: iperf.daemon.v1.TestTopology.client_assignments:type_name -> iperf.daemon.v1.TestPair
+	1,  // 6: iperf.daemon.v1.TestResult.status:type_name -> iperf.daemon.v1.TestStatus
+	2,  // 7: iperf.daemon.v1.DaemonStatus.current_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
+	3,  // 8: iperf.daemon.v1.InitializeResponse.node_info:type_name -> iperf.daemon.v1.NodeInfo
+	6,  // 9: iperf.daemon.v1.PrepareTestRequest.topology:type_name -> iperf.daemon.v1.TestTopology
+	2,  // 10: iperf.daemon.v1.PrepareTestResponse.required_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
+	2,  // 11: iperf.daemon.v1.PrepareTestResponse.available_capacity:type_name -> iperf.daemon.v1.ProcessCapacity
+	4,  // 12: iperf.daemon.v1.ClientTarget.profile:type_name -> iperf.daemon.v1.TestProfile
+	15, // 13: iperf.daemon.v1.StartClientsRequest.targets:type_name -> iperf.daemon.v1.ClientTarget
+	7,  // 14: iperf.daemon.v1.GetResultsResponse.results:type_name -> iperf.daemon.v1.TestResult
+	8,  // 15: iperf.daemon.v1.GetStatusResponse.status:type_name -> iperf.daemon.v1.DaemonStatus
+	9,  // 16: iperf.daemon.v1.DaemonService.Initialize:input_type -> iperf.daemon.v1.InitializeRequest
+	11, // 17: iperf.daemon.v1.DaemonService.PrepareTest:input_type -> iperf.daemon.v1.PrepareTestRequest
+	13, // 18: iperf.daemon.v1.DaemonService.StartServers:input_type -> iperf.daemon.v1.StartServersRequest
+	16, // 19: iperf.daemon.v1.DaemonService.StartClients:input_type -> iperf.daemon.v1.StartClientsRequest
+	18, // 20: iperf.daemon.v1.DaemonService.StopAll:input_type -> iperf.daemon.v1.StopAllRequest
+	20, // 21: iperf.daemon.v1.DaemonService.GetResults:input_type -> iperf.daemon.v1.GetResultsRequest
+	22, // 22: iperf.daemon.v1.DaemonService.GetStatus:input_type -> iperf.daemon.v1.GetStatusRequest
+	10, // 23: iperf.daemon.v1.DaemonService.Initialize:output_type -> iperf.daemon.v1.InitializeResponse
+	12, // 24: iperf.daemon.v1.DaemonService.PrepareTest:output_type -> iperf.daemon.v1.PrepareTestResponse
+	14, // 25: iperf.daemon.v1.DaemonService.StartServers:output_type -> iperf.daemon.v1.StartServersResponse
+	17, // 26: iperf.daemon.v1.DaemonService.StartClients:output_type -> iperf.daemon.v1.StartClientsResponse
+	19, // 27: iperf.daemon.v1.DaemonService.StopAll:output_type -> iperf.daemon.v1.StopAllResponse
+	21, // 28: iperf.daemon.v1.DaemonService.GetResults:output_type -> iperf.daemon.v1.GetResultsResponse
+	23, // 29: iperf.daemon.v1.DaemonService.GetStatus:output_type -> iperf.daemon.v1.GetStatusResponse
+	23, // [23:30] is the sub-list for method output_type
+	16, // [16:23] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_daemon_proto_init() }
@@ -1803,7 +1868,7 @@ func file_api_proto_daemon_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_daemon_proto_rawDesc), len(file_api_proto_daemon_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,

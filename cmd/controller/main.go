@@ -139,9 +139,16 @@ func runTest(configPath string) error {
 	// Build profile registry
 	profileRegistry := models.NewProfileRegistry()
 	for name, profileConfig := range cfg.Controller.TestProfiles {
+		// Convert protocol string to Protocol type
+		protocol := models.ProtocolTCP // Default to TCP
+		if profileConfig.Protocol == "udp" {
+			protocol = models.ProtocolUDP
+		}
+
 		profile := &models.TestProfile{
 			Name:              name,
 			Duration:          profileConfig.Duration,
+			Protocol:          protocol,
 			Bandwidth:         profileConfig.Bandwidth,
 			WindowSize:        profileConfig.WindowSize,
 			Parallel:          profileConfig.Parallel,

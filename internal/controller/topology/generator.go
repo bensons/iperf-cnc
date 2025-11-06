@@ -184,9 +184,16 @@ func ConvertProfileToProto(profile *models.TestProfile) *pb.TestProfile {
 		return &pb.TestProfile{}
 	}
 
+	// Convert protocol
+	protocol := pb.Protocol_PROTOCOL_TCP // Default to TCP
+	if profile.Protocol == models.ProtocolUDP {
+		protocol = pb.Protocol_PROTOCOL_UDP
+	}
+
 	return &pb.TestProfile{
 		Name:              profile.Name,
 		DurationSeconds:   int32(profile.Duration), // #nosec G115 -- Duration is validated to be reasonable
+		Protocol:          protocol,
 		Bandwidth:         profile.Bandwidth,
 		WindowSize:        profile.WindowSize,
 		ParallelStreams:   int32(profile.Parallel), // #nosec G115 -- Parallel streams is validated to be reasonable

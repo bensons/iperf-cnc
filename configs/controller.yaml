@@ -13,6 +13,7 @@ controller:
   test_profiles:
     default:
       duration: 10
+      protocol: tcp  # tcp or udp (default: tcp)
       parallel: 4
       bidirectional: true
       no_delay: false
@@ -20,6 +21,7 @@ controller:
 
     high_bandwidth:
       duration: 30
+      protocol: tcp
       bandwidth: "10G"
       window_size: "416K"
       parallel: 8
@@ -29,11 +31,20 @@ controller:
 
     low_latency:
       duration: 10
+      protocol: tcp
       parallel: 1
       bidirectional: false
       no_delay: true
       buffer_length: 128
       omit_seconds: 2
+
+    udp_test:
+      duration: 10
+      protocol: udp
+      bandwidth: "1G"  # UDP requires bandwidth limit
+      parallel: 4
+      bidirectional: true
+      buffer_length: 1400  # Typical MTU size for UDP
 
   topology:
     type: full_mesh

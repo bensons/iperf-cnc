@@ -33,15 +33,16 @@ type NodeConfig struct {
 // TestProfile contains iperf3 test parameters
 type TestProfile struct {
 	Duration          int               `yaml:"duration"`
+	Protocol          string            `yaml:"protocol,omitempty"` // "tcp" or "udp" (default: tcp)
 	Bandwidth         string            `yaml:"bandwidth,omitempty"`
 	WindowSize        string            `yaml:"window_size,omitempty"`
 	Parallel          int               `yaml:"parallel"`
 	Bidirectional     bool              `yaml:"bidirectional"`
 	Reverse           bool              `yaml:"reverse"`
 	BufferLength      int               `yaml:"buffer_length,omitempty"`
-	CongestionControl string            `yaml:"congestion_control,omitempty"`
-	MSS               int               `yaml:"mss,omitempty"`
-	NoDelay           bool              `yaml:"no_delay"`
+	CongestionControl string            `yaml:"congestion_control,omitempty"` // TCP only
+	MSS               int               `yaml:"mss,omitempty"`                // TCP only
+	NoDelay           bool              `yaml:"no_delay"`                     // TCP only
 	TOS               int               `yaml:"tos,omitempty"`
 	ZeroCopy          bool              `yaml:"zerocopy"`
 	OmitSeconds       int               `yaml:"omit_seconds,omitempty"`

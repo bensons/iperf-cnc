@@ -331,7 +331,14 @@ func convertProfileToIperfConfig(profile *pb.TestProfile) *iperf.Config {
 		return &iperf.Config{}
 	}
 
+	// Convert protocol
+	protocol := iperf.ProtocolTCP // Default to TCP
+	if profile.Protocol == pb.Protocol_PROTOCOL_UDP {
+		protocol = iperf.ProtocolUDP
+	}
+
 	return &iperf.Config{
+		Protocol:          protocol,
 		Duration:          int(profile.DurationSeconds),
 		Bandwidth:         profile.Bandwidth,
 		WindowSize:        profile.WindowSize,

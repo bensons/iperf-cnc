@@ -5,19 +5,30 @@ import (
 	"strings"
 )
 
+// Protocol represents the transport protocol for iperf3 tests
+type Protocol string
+
+const (
+	// ProtocolTCP represents TCP protocol
+	ProtocolTCP Protocol = "tcp"
+	// ProtocolUDP represents UDP protocol
+	ProtocolUDP Protocol = "udp"
+)
+
 // TestProfile contains all iperf3 parameters for a test
 type TestProfile struct {
 	Name              string
 	Duration          int
+	Protocol          Protocol // TCP or UDP (default: TCP)
 	Bandwidth         string
 	WindowSize        string
 	Parallel          int
 	Bidirectional     bool
 	Reverse           bool
 	BufferLength      int
-	CongestionControl string
-	MSS               int
-	NoDelay           bool
+	CongestionControl string // TCP only
+	MSS               int    // TCP only
+	NoDelay           bool   // TCP only
 	TOS               int
 	ZeroCopy          bool
 	OmitSeconds       int
@@ -69,6 +80,7 @@ func (p *TestProfile) Clone() *TestProfile {
 	clone := &TestProfile{
 		Name:              p.Name,
 		Duration:          p.Duration,
+		Protocol:          p.Protocol,
 		Bandwidth:         p.Bandwidth,
 		WindowSize:        p.WindowSize,
 		Parallel:          p.Parallel,
@@ -96,6 +108,11 @@ func (p *TestProfile) Clone() *TestProfile {
 // ToCommandArgs converts the profile to iperf3 command line arguments
 func (p *TestProfile) ToCommandArgs() []string {
 	args := make([]string, 0)
+
+	// Protocol (UDP requires -u flag, TCP is default)
+	if p.Protocol == ProtocolUDP {
+		args = append(args, "-u")
+	}
 
 	// Duration
 	args = append(args, "-t", fmt.Sprintf("%d", p.Duration))
@@ -130,18 +147,18 @@ func (p *TestProfile) ToCommandArgs() []string {
 		args = append(args, "-l", fmt.Sprintf("%d", p.BufferLength))
 	}
 
-	// Congestion control
-	if p.CongestionControl != "" {
+	// Congestion control (TCP only)
+	if p.Protocol != ProtocolUDP && p.CongestionControl != "" {
 		args = append(args, "-C", p.CongestionControl)
 	}
 
-	// MSS
-	if p.MSS > 0 {
+	// MSS (TCP only)
+	if p.Protocol != ProtocolUDP && p.MSS > 0 {
 		args = append(args, "-M", fmt.Sprintf("%d", p.MSS))
 	}
 
-	// No delay
-	if p.NoDelay {
+	// No delay (TCP only)
+	if p.Protocol != ProtocolUDP && p.NoDelay {
 		args = append(args, "-N")
 	}
 

@@ -46,24 +46,32 @@ message NodeInfo {
   ProcessCapacity capacity = 5;
 }
 
+// Protocol represents the transport protocol for iperf3 tests
+enum Protocol {
+  PROTOCOL_UNSPECIFIED = 0;
+  PROTOCOL_TCP = 1;
+  PROTOCOL_UDP = 2;
+}
+
 // TestProfile contains all iperf3 parameters for a test
 message TestProfile {
   string name = 1;
   int32 duration_seconds = 2;
-  string bandwidth = 3;  // e.g., "10G", "100M", "0" for unlimited
-  string window_size = 4; // e.g., "416K"
-  int32 parallel_streams = 5;
-  bool bidirectional = 6;
-  bool reverse = 7;
-  int32 buffer_length = 8;
-  string congestion_control = 9; // e.g., "cubic", "bbr"
-  int32 mss = 10; // Maximum segment size
-  bool no_delay = 11; // TCP no delay
-  int32 tos = 12; // Type of service
-  bool zerocopy = 13;
-  int32 omit_seconds = 14; // Seconds to omit at start
-  string json_output = 15; // JSON output mode
-  map<string, string> extra_flags = 16; // Additional iperf3 flags
+  Protocol protocol = 3; // TCP or UDP
+  string bandwidth = 4;  // e.g., "10G", "100M", "0" for unlimited
+  string window_size = 5; // e.g., "416K"
+  int32 parallel_streams = 6;
+  bool bidirectional = 7;
+  bool reverse = 8;
+  int32 buffer_length = 9;
+  string congestion_control = 10; // e.g., "cubic", "bbr" (TCP only)
+  int32 mss = 11; // Maximum segment size (TCP only)
+  bool no_delay = 12; // TCP no delay (TCP only)
+  int32 tos = 13; // Type of service
+  bool zerocopy = 14;
+  int32 omit_seconds = 15; // Seconds to omit at start
+  string json_output = 16; // JSON output mode
+  map<string, string> extra_flags = 17; // Additional iperf3 flags
 }
 
 // TestPair represents a source-destination pair for testing
