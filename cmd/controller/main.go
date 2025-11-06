@@ -383,7 +383,7 @@ func saveRawResults(ctx context.Context, pool *client.Pool, filename string) err
 
 	// Collect raw results from all daemons
 	clients := pool.GetAllClients()
-	allResults := make(map[string]interface{})
+	allResults := make(map[string]any)
 
 	for _, c := range clients {
 		req := &pb.GetResultsRequest{
@@ -397,14 +397,14 @@ func saveRawResults(ctx context.Context, pool *client.Pool, filename string) err
 		}
 
 		// Store results for this node
-		allResults[c.Node.ID] = map[string]interface{}{
+		allResults[c.Node.ID] = map[string]any{
 			"total_count": resp.TotalCount,
 			"results":     resp.Results,
 		}
 	}
 
 	// Create file
-	file, err := os.Create(filename)
+	file, err := os.Create(filename) // #nosec G304 -- Filename is from config or generated internally
 	if err != nil {
 		return fmt.Errorf("failed to create raw results file: %w", err)
 	}
