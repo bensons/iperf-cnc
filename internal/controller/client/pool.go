@@ -49,9 +49,17 @@ func (p *Pool) Connect(ctx context.Context, node *models.Node) error {
 		return nil
 	}
 
-	// Create connection
+	// Create connection with increased message size limits
+	// Default is 4MB, but iperf3 JSON results can be large with many tests
 	addr := node.Address()
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(100*1024*1024), // 100MB max receive
+			grpc.MaxCallSendMsgSize(100*1024*1024), // 100MB max send
+		),
+	}
+	conn, err := grpc.NewClient(addr, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to connect to %s: %w", addr, err)
 	}

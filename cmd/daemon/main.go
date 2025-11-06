@@ -79,8 +79,12 @@ func runDaemon(configPath string) error {
 		return fmt.Errorf("failed to create daemon server: %w", err)
 	}
 
-	// Create gRPC server
-	grpcServer := grpc.NewServer()
+	// Create gRPC server with increased message size limits
+	// Default is 4MB, but iperf3 JSON results can be large with many tests
+	grpcServer := grpc.NewServer(
+		grpc.MaxRecvMsgSize(100*1024*1024), // 100MB max receive
+		grpc.MaxSendMsgSize(100*1024*1024), // 100MB max send
+	)
 	pb.RegisterDaemonServiceServer(grpcServer, daemonServer)
 
 	// Start listening
