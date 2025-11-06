@@ -52,26 +52,35 @@ func NewAggregator() *Aggregator {
 // CollectResults collects results from all nodes via the client pool
 func (a *Aggregator) CollectResults(ctx context.Context, clientPool *client.Pool) error {
 	clients := clientPool.GetAllClients()
+	var errors []error
 
 	for _, c := range clients {
 		req := &pb.GetResultsRequest{
-			ClearAfterRetrieval: false, // Don't clear yet
+			ClearAfterRetrieval: true, // Clear after successful retrieval
 		}
 
 		resp, err := c.Client.GetResults(ctx, req)
 		if err != nil {
-			return fmt.Errorf("failed to get results from node %s: %w", c.Node.ID, err)
+			// Log error but continue with other nodes
+			errors = append(errors, fmt.Errorf("node %s: %w", c.Node.ID, err))
+			continue
 		}
 
 		// Process each result
 		for _, pbResult := range resp.Results {
 			result, err := a.convertResult(pbResult)
 			if err != nil {
-				return fmt.Errorf("failed to convert result: %w", err)
+				errors = append(errors, fmt.Errorf("node %s result conversion: %w", c.Node.ID, err))
+				continue
 			}
 
 			a.addResult(result)
 		}
+	}
+
+	// Return error only if we failed to collect from ALL nodes
+	if len(errors) > 0 && len(a.results) == 0 {
+		return fmt.Errorf("failed to collect any results: %v", errors)
 	}
 
 	return nil

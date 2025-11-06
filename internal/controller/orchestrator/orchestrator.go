@@ -293,7 +293,7 @@ func (o *Orchestrator) waitPhase(ctx context.Context) error {
 	return nil
 }
 
-// collectPhase collects results from all nodes
+// collectPhase verifies results are ready on all nodes
 func (o *Orchestrator) collectPhase(ctx context.Context) error {
 	o.state = StateCollecting
 	log.Println("Phase 6: Collecting results...")
@@ -303,7 +303,7 @@ func (o *Orchestrator) collectPhase(ctx context.Context) error {
 
 	for _, c := range clients {
 		req := &pb.GetResultsRequest{
-			ClearAfterRetrieval: true,
+			ClearAfterRetrieval: false, // Don't clear - aggregator will collect later
 		}
 
 		resp, err := c.Client.GetResults(ctx, req)
