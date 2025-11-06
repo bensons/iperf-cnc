@@ -376,6 +376,10 @@ func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) error 
 
 	// Use result directory if configured
 	if s.config.ResultDir != "" {
+		// Ensure directory exists
+		if err := os.MkdirAll(s.config.ResultDir, 0750); err != nil {
+			return fmt.Errorf("failed to create result directory: %w", err)
+		}
 		filename = fmt.Sprintf("%s/%s", s.config.ResultDir, filename)
 	}
 

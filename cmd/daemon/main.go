@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/bensons/iperf-cnc/api/proto"
 	"github.com/bensons/iperf-cnc/internal/common/config"
@@ -49,6 +53,19 @@ for distributed network performance testing.`,
 	return rootCmd
 }
 
+// panicRecoveryInterceptor recovers from panics in gRPC handlers
+func panicRecoveryInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("PANIC in %s: %v\n%s", info.FullMethod, r, debug.Stack())
+				err = status.Errorf(codes.Internal, "internal server error: %v", r)
+			}
+		}()
+		return handler(ctx, req)
+	}
+}
+
 func runDaemon(configPath string) error {
 	fmt.Printf("iperf-daemon version %s\n", version)
 	fmt.Printf("Loading configuration from: %s\n", configPath)
@@ -79,11 +96,14 @@ func runDaemon(configPath string) error {
 		return fmt.Errorf("failed to create daemon server: %w", err)
 	}
 
-	// Create gRPC server with increased message size limits
+	// Create gRPC server with increased message size limits and recovery
 	// Default is 4MB, but iperf3 JSON results can be large with many tests
 	grpcServer := grpc.NewServer(
 		grpc.MaxRecvMsgSize(100*1024*1024), // 100MB max receive
 		grpc.MaxSendMsgSize(100*1024*1024), // 100MB max send
+		grpc.ChainUnaryInterceptor(
+			panicRecoveryInterceptor(),
+		),
 	)
 	pb.RegisterDaemonServiceServer(grpcServer, daemonServer)
 
