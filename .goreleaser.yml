@@ -1,0 +1,129 @@
+# GoReleaser configuration for iperf-cnc
+# Documentation: https://goreleaser.com
+
+version: 2
+
+before:
+  hooks:
+    # Generate protobuf code before building
+    - make proto
+
+builds:
+  # Build iperf-daemon
+  - id: daemon
+    main: ./cmd/daemon
+    binary: iperf-daemon
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    
+  # Build iperf-controller
+  - id: controller
+    main: ./cmd/controller
+    binary: iperf-controller
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: archives
+    name_template: >-
+      {{ .Binary }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - LICENSE
+      - ai-docs/README.md
+      - configs/*.yaml
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^chore:'
+      - 'typo'
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
+
+release:
+  github:
+    owner: bensons
+    name: iperf-cnc
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## iperf-cnc {{ .Tag }}
+    
+    Distributed iperf3 network performance testing system.
+    
+    ### Installation
+    
+    Download the appropriate binary for your platform below.
+    
+    **Daemon** (runs on each test node):
+    - Extract the archive
+    - Copy `iperf-daemon` to `/usr/local/bin/`
+    - Copy `configs/daemon.yaml` to `/etc/iperf-cnc/daemon.yaml`
+    - Configure and start the daemon
+    
+    **Controller** (orchestrates tests):
+    - Extract the archive
+    - Copy `iperf-controller` to `/usr/local/bin/`
+    - Create a controller configuration file
+    - Run tests with `iperf-controller run --config controller.yaml`
+    
+    See the [README](https://github.com/bensons/iperf-cnc/blob/main/ai-docs/README.md) for detailed documentation.
+  footer: |
+    **Full Changelog**: https://github.com/bensons/iperf-cnc/compare/{{ .PreviousTag }}...{{ .Tag }}
+    
+    ---
+
+    ### Checksums
+
+    Verify your download with the checksums in `checksums.txt`.
+
