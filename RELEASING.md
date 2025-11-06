@@ -12,7 +12,19 @@ This document describes how to create a new release of iperf-cnc.
 
 ### 1. Update Version Information
 
-If you have version information in your code (e.g., in `main.go` files), update it to the new version.
+Update the version in README.md:
+
+```bash
+# After creating the tag, update README.md
+make update-version
+
+# Commit the version update
+git add README.md
+git commit -m "Update README.md to version vX.Y.Z"
+git push
+```
+
+**Note:** The version in README.md should be updated after creating the tag, as the `update-version` script reads the latest git tag.
 
 ### 2. Create and Push a Tag
 

@@ -1,4 +1,4 @@
-.PHONY: all build test clean proto deps lint fmt install-tools help
+.PHONY: all build test clean proto deps lint fmt install-tools help update-version
 
 # Variables
 BINARY_DAEMON := iperf-daemon
@@ -138,5 +138,8 @@ docker-build: ## Build Docker images
 watch: ## Watch for changes and rebuild (requires entr)
 	@echo "Watching for changes... (requires 'entr' to be installed)"
 	find . -name '*.go' | entr -r make build
+
+update-version: ## Update version in README.md from latest git tag
+	@./scripts/update-version.sh
 
 .DEFAULT_GOAL := help
