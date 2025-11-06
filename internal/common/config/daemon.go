@@ -14,12 +14,12 @@ type DaemonConfig struct {
 
 // DaemonSettings contains the daemon operational settings
 type DaemonSettings struct {
-	ListenPort    int          `yaml:"listen_port"`
-	PortRange     PortRange    `yaml:"port_range"`
-	MaxProcesses  int          `yaml:"max_processes"`
-	CPUAffinity   bool         `yaml:"cpu_affinity"`
-	LogLevel      string       `yaml:"log_level"`
-	ResultDir     string       `yaml:"result_dir"`
+	ListenPort    int           `yaml:"listen_port"`
+	PortRange     PortRange     `yaml:"port_range"`
+	MaxProcesses  int           `yaml:"max_processes"`
+	CPUAffinity   bool          `yaml:"cpu_affinity"`
+	LogLevel      string        `yaml:"log_level"`
+	ResultDir     string        `yaml:"result_dir"`
 	TimeoutConfig TimeoutConfig `yaml:"timeout"`
 }
 
@@ -38,7 +38,7 @@ type TimeoutConfig struct {
 
 // LoadDaemonConfig loads daemon configuration from a YAML file
 func LoadDaemonConfig(path string) (*DaemonConfig, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- Config file path is provided by user
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

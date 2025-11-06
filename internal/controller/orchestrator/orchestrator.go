@@ -15,15 +15,15 @@ import (
 type TestState string
 
 const (
-	StateInit          TestState = "init"
-	StateConnecting    TestState = "connecting"
-	StatePreparing     TestState = "preparing"
+	StateInit            TestState = "init"
+	StateConnecting      TestState = "connecting"
+	StatePreparing       TestState = "preparing"
 	StateStartingServers TestState = "starting_servers"
 	StateStartingClients TestState = "starting_clients"
-	StateRunning       TestState = "running"
-	StateCollecting    TestState = "collecting"
-	StateComplete      TestState = "complete"
-	StateFailed        TestState = "failed"
+	StateRunning         TestState = "running"
+	StateCollecting      TestState = "collecting"
+	StateComplete        TestState = "complete"
+	StateFailed          TestState = "failed"
 )
 
 // Orchestrator manages the execution of distributed tests

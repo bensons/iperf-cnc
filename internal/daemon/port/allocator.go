@@ -7,8 +7,8 @@ import (
 
 // Allocator manages port allocation for iperf3 servers
 type Allocator struct {
-	startPort     int
-	endPort       int
+	startPort      int
+	endPort        int
 	allocatedPorts map[int]bool
 	portToTestID   map[int]string
 	testIDToPort   map[string]int

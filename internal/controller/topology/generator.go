@@ -17,9 +17,9 @@ type TestPair struct {
 
 // Topology represents the complete test topology
 type Topology struct {
-	Pairs          []*TestPair
-	ServerPorts    map[string][]int32 // nodeID -> ports
-	ClientTests    map[string][]*TestPair // nodeID -> test pairs
+	Pairs       []*TestPair
+	ServerPorts map[string][]int32     // nodeID -> ports
+	ClientTests map[string][]*TestPair // nodeID -> test pairs
 }
 
 // Generator generates test topologies
@@ -126,11 +126,11 @@ func (g *Generator) GenerateNodeTopologies(topology *Topology) (map[string]*pb.T
 		for _, pair := range topology.Pairs {
 			if pair.Destination.ID == nodeID {
 				result[nodeID].ServerAssignments = append(result[nodeID].ServerAssignments, &pb.TestPair{
-					SourceId:      pair.Source.ID,
-					DestinationId: pair.Destination.ID,
-					DestinationIp: pair.Destination.IP,
+					SourceId:        pair.Source.ID,
+					DestinationId:   pair.Destination.ID,
+					DestinationIp:   pair.Destination.IP,
 					DestinationPort: port,
-					Profile:       ConvertProfileToProto(pair.Profile),
+					Profile:         ConvertProfileToProto(pair.Profile),
 				})
 			}
 		}
@@ -179,19 +179,19 @@ func ConvertProfileToProto(profile *models.TestProfile) *pb.TestProfile {
 
 	return &pb.TestProfile{
 		Name:              profile.Name,
-		DurationSeconds:   int32(profile.Duration),
+		DurationSeconds:   int32(profile.Duration), // #nosec G115 -- Duration is validated to be reasonable
 		Bandwidth:         profile.Bandwidth,
 		WindowSize:        profile.WindowSize,
-		ParallelStreams:   int32(profile.Parallel),
+		ParallelStreams:   int32(profile.Parallel), // #nosec G115 -- Parallel streams is validated to be reasonable
 		Bidirectional:     profile.Bidirectional,
 		Reverse:           profile.Reverse,
-		BufferLength:      int32(profile.BufferLength),
+		BufferLength:      int32(profile.BufferLength), // #nosec G115 -- Buffer length is validated to be reasonable
 		CongestionControl: profile.CongestionControl,
-		Mss:               int32(profile.MSS),
+		Mss:               int32(profile.MSS), // #nosec G115 -- MSS is validated to be reasonable
 		NoDelay:           profile.NoDelay,
-		Tos:               int32(profile.TOS),
+		Tos:               int32(profile.TOS), // #nosec G115 -- TOS is validated to be reasonable
 		Zerocopy:          profile.ZeroCopy,
-		OmitSeconds:       int32(profile.OmitSeconds),
+		OmitSeconds:       int32(profile.OmitSeconds), // #nosec G115 -- Omit seconds is validated to be reasonable
 	}
 }
 

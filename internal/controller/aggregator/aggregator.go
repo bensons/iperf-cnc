@@ -27,13 +27,13 @@ type TestResult struct {
 
 // Summary contains aggregate statistics
 type Summary struct {
-	TotalTests      int     `json:"total_tests"`
-	CompletedTests  int     `json:"completed_tests"`
-	FailedTests     int     `json:"failed_tests"`
-	AvgThroughput   float64 `json:"avg_throughput_bps"`
-	MinThroughput   float64 `json:"min_throughput_bps"`
-	MaxThroughput   float64 `json:"max_throughput_bps"`
-	TotalRetransmits int64  `json:"total_retransmits"`
+	TotalTests       int     `json:"total_tests"`
+	CompletedTests   int     `json:"completed_tests"`
+	FailedTests      int     `json:"failed_tests"`
+	AvgThroughput    float64 `json:"avg_throughput_bps"`
+	MinThroughput    float64 `json:"min_throughput_bps"`
+	MaxThroughput    float64 `json:"max_throughput_bps"`
+	TotalRetransmits int64   `json:"total_retransmits"`
 }
 
 // Aggregator collects and aggregates results from all nodes
@@ -138,7 +138,7 @@ func (a *Aggregator) GetSummary() *Summary {
 	defer a.mu.RUnlock()
 
 	summary := &Summary{
-		TotalTests: len(a.results),
+		TotalTests:    len(a.results),
 		MinThroughput: -1,
 	}
 

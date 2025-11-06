@@ -61,7 +61,9 @@ func newRunCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
 		"path to configuration file")
-	cmd.MarkFlagRequired("config")
+	if err := cmd.MarkFlagRequired("config"); err != nil {
+		panic(err) // This should never happen during initialization
+	}
 
 	return cmd
 }
@@ -79,7 +81,9 @@ func newValidateCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
 		"path to configuration file")
-	cmd.MarkFlagRequired("config")
+	if err := cmd.MarkFlagRequired("config"); err != nil {
+		panic(err) // This should never happen during initialization
+	}
 
 	return cmd
 }
@@ -97,7 +101,9 @@ func newStatusCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
 		"path to configuration file")
-	cmd.MarkFlagRequired("config")
+	if err := cmd.MarkFlagRequired("config"); err != nil {
+		panic(err) // This should never happen during initialization
+	}
 
 	return cmd
 }
@@ -123,8 +129,8 @@ func runTest(configPath string) error {
 			Port:     nodeConfig.Port,
 			Tags:     nodeConfig.Tags,
 		}
-		if err := nodeRegistry.AddNode(node); err != nil {
-			return fmt.Errorf("failed to add node: %w", err)
+		if addErr := nodeRegistry.AddNode(node); addErr != nil {
+			return fmt.Errorf("failed to add node: %w", addErr)
 		}
 	}
 
@@ -149,8 +155,8 @@ func runTest(configPath string) error {
 			ZeroCopy:          profileConfig.ZeroCopy,
 			OmitSeconds:       profileConfig.OmitSeconds,
 		}
-		if err := profileRegistry.AddProfile(profile); err != nil {
-			return fmt.Errorf("failed to add profile: %w", err)
+		if addErr := profileRegistry.AddProfile(profile); addErr != nil {
+			return fmt.Errorf("failed to add profile: %w", addErr)
 		}
 	}
 
@@ -169,10 +175,14 @@ func runTest(configPath string) error {
 
 	log.Println("Connecting to daemons...")
 	nodes := nodeRegistry.GetAllNodes()
-	if err := pool.ConnectAll(ctx, nodes); err != nil {
-		return fmt.Errorf("failed to connect to daemons: %w", err)
+	if connErr := pool.ConnectAll(ctx, nodes); connErr != nil {
+		return fmt.Errorf("failed to connect to daemons: %w", connErr)
 	}
-	defer pool.Close()
+	defer func() {
+		if closeErr := pool.Close(); closeErr != nil {
+			log.Printf("Warning: failed to close connection pool: %v", closeErr)
+		}
+	}()
 
 	log.Printf("Connected to %d daemons\n", pool.Count())
 
@@ -187,7 +197,9 @@ func runTest(configPath string) error {
 			for i, src := range override.Nodes {
 				for j, dst := range override.Nodes {
 					if i != j {
-						topoGen.AddOverride(src, dst, override.Profile)
+						if overrideErr := topoGen.AddOverride(src, dst, override.Profile); overrideErr != nil {
+							return fmt.Errorf("failed to add topology override: %w", overrideErr)
+						}
 					}
 				}
 			}
@@ -289,8 +301,8 @@ func checkStatus(configPath string) error {
 			IP:       nodeConfig.IP,
 			Port:     nodeConfig.Port,
 		}
-		if err := nodeRegistry.AddNode(node); err != nil {
-			return fmt.Errorf("failed to add node: %w", err)
+		if addErr := nodeRegistry.AddNode(node); addErr != nil {
+			return fmt.Errorf("failed to add node: %w", addErr)
 		}
 	}
 
@@ -300,10 +312,14 @@ func checkStatus(configPath string) error {
 	pool := client.NewPool(timeout)
 
 	nodes := nodeRegistry.GetAllNodes()
-	if err := pool.ConnectAll(ctx, nodes); err != nil {
-		log.Printf("Warning: %v", err)
+	if connErr := pool.ConnectAll(ctx, nodes); connErr != nil {
+		log.Printf("Warning: %v", connErr)
 	}
-	defer pool.Close()
+	defer func() {
+		if closeErr := pool.Close(); closeErr != nil {
+			log.Printf("Warning: failed to close connection pool: %v", closeErr)
+		}
+	}()
 
 	// Check health
 	statuses, err := pool.CheckHealth(ctx)

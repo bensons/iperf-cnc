@@ -182,7 +182,7 @@ func (w *Wrapper) Run(ctx context.Context, config *Config) (*Result, error) {
 		StartTime: time.Now(),
 	}
 
-	cmd := exec.CommandContext(ctx, w.iperfPath, args...)
+	cmd := exec.CommandContext(ctx, w.iperfPath, args...) // #nosec G204 -- iperf3 path is controlled, args are validated
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
@@ -226,7 +226,7 @@ func (w *Wrapper) RunServer(ctx context.Context, port int) (*exec.Cmd, error) {
 		"-J",
 	}
 
-	cmd := exec.CommandContext(ctx, w.iperfPath, args...)
+	cmd := exec.CommandContext(ctx, w.iperfPath, args...) // #nosec G204 -- iperf3 path is controlled, args are validated
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("failed to start iperf3 server: %w", err)

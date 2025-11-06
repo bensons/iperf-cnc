@@ -14,45 +14,45 @@ type ControllerConfig struct {
 
 // ControllerSettings contains the controller operational settings
 type ControllerSettings struct {
-	Nodes        []NodeConfig              `yaml:"nodes"`
-	TestProfiles map[string]TestProfile    `yaml:"test_profiles"`
-	Topology     TopologyConfig            `yaml:"topology"`
-	Output       OutputConfig              `yaml:"output"`
-	Concurrency  ConcurrencyConfig         `yaml:"concurrency"`
+	Nodes        []NodeConfig           `yaml:"nodes"`
+	TestProfiles map[string]TestProfile `yaml:"test_profiles"`
+	Topology     TopologyConfig         `yaml:"topology"`
+	Output       OutputConfig           `yaml:"output"`
+	Concurrency  ConcurrencyConfig      `yaml:"concurrency"`
 }
 
 // NodeConfig represents a node in the cluster
 type NodeConfig struct {
-	Hostname string `yaml:"hostname"`
-	IP       string `yaml:"ip"`
-	Port     int    `yaml:"port"`
-	ID       string `yaml:"id,omitempty"` // Optional, defaults to hostname
+	Hostname string   `yaml:"hostname"`
+	IP       string   `yaml:"ip"`
+	Port     int      `yaml:"port"`
+	ID       string   `yaml:"id,omitempty"` // Optional, defaults to hostname
 	Tags     []string `yaml:"tags,omitempty"`
 }
 
 // TestProfile contains iperf3 test parameters
 type TestProfile struct {
-	Duration         int               `yaml:"duration"`
-	Bandwidth        string            `yaml:"bandwidth,omitempty"`
-	WindowSize       string            `yaml:"window_size,omitempty"`
-	Parallel         int               `yaml:"parallel"`
-	Bidirectional    bool              `yaml:"bidirectional"`
-	Reverse          bool              `yaml:"reverse"`
-	BufferLength     int               `yaml:"buffer_length,omitempty"`
-	CongestionControl string           `yaml:"congestion_control,omitempty"`
-	MSS              int               `yaml:"mss,omitempty"`
-	NoDelay          bool              `yaml:"no_delay"`
-	TOS              int               `yaml:"tos,omitempty"`
-	ZeroCopy         bool              `yaml:"zerocopy"`
-	OmitSeconds      int               `yaml:"omit_seconds,omitempty"`
-	ExtraFlags       map[string]string `yaml:"extra_flags,omitempty"`
+	Duration          int               `yaml:"duration"`
+	Bandwidth         string            `yaml:"bandwidth,omitempty"`
+	WindowSize        string            `yaml:"window_size,omitempty"`
+	Parallel          int               `yaml:"parallel"`
+	Bidirectional     bool              `yaml:"bidirectional"`
+	Reverse           bool              `yaml:"reverse"`
+	BufferLength      int               `yaml:"buffer_length,omitempty"`
+	CongestionControl string            `yaml:"congestion_control,omitempty"`
+	MSS               int               `yaml:"mss,omitempty"`
+	NoDelay           bool              `yaml:"no_delay"`
+	TOS               int               `yaml:"tos,omitempty"`
+	ZeroCopy          bool              `yaml:"zerocopy"`
+	OmitSeconds       int               `yaml:"omit_seconds,omitempty"`
+	ExtraFlags        map[string]string `yaml:"extra_flags,omitempty"`
 }
 
 // TopologyConfig defines the test topology
 type TopologyConfig struct {
-	Type           string              `yaml:"type"` // "full_mesh", "custom"
-	DefaultProfile string              `yaml:"default_profile"`
-	Overrides      []TopologyOverride  `yaml:"overrides,omitempty"`
+	Type           string             `yaml:"type"` // "full_mesh", "custom"
+	DefaultProfile string             `yaml:"default_profile"`
+	Overrides      []TopologyOverride `yaml:"overrides,omitempty"`
 }
 
 // TopologyOverride allows specific node pairs to use different profiles
@@ -82,7 +82,7 @@ type ConcurrencyConfig struct {
 
 // LoadControllerConfig loads controller configuration from a YAML file
 func LoadControllerConfig(path string) (*ControllerConfig, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) // #nosec G304 -- Config file path is provided by user
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

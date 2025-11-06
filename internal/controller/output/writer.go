@@ -39,7 +39,11 @@ func (w *Writer) WriteJSON(data *OutputData) error {
 	if err != nil {
 		return fmt.Errorf("failed to create JSON file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close JSON file: %v\n", err)
+		}
+	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
@@ -61,7 +65,11 @@ func (w *Writer) WriteCSV(results []*aggregator.TestResult) error {
 	if err != nil {
 		return fmt.Errorf("failed to create CSV file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close CSV file: %v\n", err)
+		}
+	}()
 
 	writer := csv.NewWriter(file)
 	defer writer.Flush()

@@ -10,24 +10,24 @@ import (
 
 // TestResult represents the result of a test execution
 type TestResult struct {
-	TestID       string
-	SourceID     string
+	TestID        string
+	SourceID      string
 	DestinationID string
-	Status       string
-	IperfJSON    string
-	ErrorMessage string
-	StartTime    time.Time
-	EndTime      time.Time
-	ExitCode     int
+	Status        string
+	IperfJSON     string
+	ErrorMessage  string
+	StartTime     time.Time
+	EndTime       time.Time
+	ExitCode      int
 }
 
 // Collector collects and stores test results
 type Collector struct {
-	results      map[string]*TestResult
-	completed    int
-	failed       int
-	mu           sync.RWMutex
-	resultDir    string
+	results   map[string]*TestResult
+	completed int
+	failed    int
+	mu        sync.RWMutex
+	resultDir string
 }
 
 // NewCollector creates a new result collector

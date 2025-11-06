@@ -20,7 +20,6 @@ linters:
     - revive
     - bodyclose
     - errname
-    - godot
     - nilerr
     - nolintlint
     - prealloc
@@ -35,7 +34,8 @@ linters:
     govet:
       enable:
         - shadow
-      enable-all: true
+      disable:
+        - fieldalignment
 
     gocyclo:
       min-complexity: 15

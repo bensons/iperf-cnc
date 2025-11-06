@@ -17,18 +17,18 @@ type Progress struct {
 	TotalClients int
 
 	// Progress counts
-	ConnectedNodes    int
-	PreparedNodes     int
-	StartedServers    int
-	StartedClients    int
-	CompletedTests    int
-	FailedTests       int
-	CollectedResults  int
+	ConnectedNodes   int
+	PreparedNodes    int
+	StartedServers   int
+	StartedClients   int
+	CompletedTests   int
+	FailedTests      int
+	CollectedResults int
 
 	// Timing
-	StartTime   time.Time
+	StartTime    time.Time
 	CurrentPhase string
-	PhaseStart  time.Time
+	PhaseStart   time.Time
 
 	// Errors
 	Errors []string

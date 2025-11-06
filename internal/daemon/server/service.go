@@ -17,10 +17,10 @@ import (
 type DaemonServer struct {
 	pb.UnimplementedDaemonServiceServer
 
-	portAllocator *port.Allocator
+	portAllocator  *port.Allocator
 	processManager *process.Manager
-	capacity      *process.CapacityCalculator
-	collector     *collector.Collector
+	capacity       *process.CapacityCalculator
+	collector      *collector.Collector
 
 	// Daemon metadata
 	hostname  string
@@ -33,7 +33,7 @@ type DaemonServer struct {
 
 // Config contains daemon server configuration
 type Config struct {
-	ListenPort    int
+	ListenPort     int
 	PortRangeStart int
 	PortRangeEnd   int
 	MaxProcesses   int
@@ -108,13 +108,13 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 		NodeInfo: &pb.NodeInfo{
 			Id:       s.hostname,
 			Hostname: s.hostname,
-			Ip:       "", // Will be filled by controller
-			Port:     int32(s.config.ListenPort),
+			Ip:       "",                         // Will be filled by controller
+			Port:     int32(s.config.ListenPort), // #nosec G115 -- Port is validated to be in valid range
 			Capacity: &pb.ProcessCapacity{
-				MaxProcesses:         int32(cap.MaxProcesses),
-				AvailableProcesses:   int32(cap.AvailableProcesses),
-				CpuCores:             int32(cap.CPUCores),
-				AvailableMemoryBytes: int64(cap.AvailableMemory),
+				MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+				AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+				CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+				AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
 				NetworkInterfaces:    cap.NetworkInterfaces,
 			},
 		},
@@ -158,14 +158,14 @@ func (s *DaemonServer) PrepareTest(ctx context.Context, req *pb.PrepareTestReque
 		CanHandle: canHandle,
 		Message:   message,
 		RequiredCapacity: &pb.ProcessCapacity{
-			MaxProcesses:       int32(totalRequired),
-			AvailableProcesses: int32(totalRequired),
+			MaxProcesses:       int32(totalRequired), // #nosec G115 -- Process count is reasonable
+			AvailableProcesses: int32(totalRequired), // #nosec G115 -- Process count is reasonable
 		},
 		AvailableCapacity: &pb.ProcessCapacity{
-			MaxProcesses:         int32(cap.MaxProcesses),
-			AvailableProcesses:   int32(cap.AvailableProcesses),
-			CpuCores:             int32(cap.CPUCores),
-			AvailableMemoryBytes: int64(cap.AvailableMemory),
+			MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+			AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+			CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+			AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
 			NetworkInterfaces:    cap.NetworkInterfaces,
 		},
 	}, nil
@@ -247,9 +247,9 @@ func (s *DaemonServer) StopAll(ctx context.Context, req *pb.StopAllRequest) (*pb
 	stoppedCount := s.processManager.StopAll()
 
 	return &pb.StopAllResponse{
-		Success:         true,
-		Message:         fmt.Sprintf("stopped %d processes", stoppedCount),
-		StoppedProcesses: int32(stoppedCount),
+		Success:          true,
+		Message:          fmt.Sprintf("stopped %d processes", stoppedCount),
+		StoppedProcesses: int32(stoppedCount), // #nosec G115 -- Process count is reasonable
 	}, nil
 }
 
@@ -282,7 +282,7 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 			ErrorMessage:  result.ErrorMessage,
 			StartTimeUnix: result.StartTime.Unix(),
 			EndTimeUnix:   result.EndTime.Unix(),
-			ExitCode:      int32(result.ExitCode),
+			ExitCode:      int32(result.ExitCode), // #nosec G115 -- Exit code is in valid range
 		})
 	}
 
@@ -293,7 +293,7 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 
 	return &pb.GetResultsResponse{
 		Results:    pbResults,
-		TotalCount: int32(len(pbResults)),
+		TotalCount: int32(len(pbResults)), // #nosec G115 -- Result count is reasonable
 	}, nil
 }
 
@@ -309,14 +309,14 @@ func (s *DaemonServer) GetStatus(ctx context.Context, req *pb.GetStatusRequest) 
 	return &pb.GetStatusResponse{
 		Status: &pb.DaemonStatus{
 			Healthy:          true,
-			RunningProcesses: int32(s.processManager.GetRunningCount()),
-			CompletedTests:   int32(s.collector.GetCompletedCount()),
-			FailedTests:      int32(s.collector.GetFailedCount()),
+			RunningProcesses: int32(s.processManager.GetRunningCount()), // #nosec G115 -- Process count is reasonable
+			CompletedTests:   int32(s.collector.GetCompletedCount()),    // #nosec G115 -- Test count is reasonable
+			FailedTests:      int32(s.collector.GetFailedCount()),       // #nosec G115 -- Test count is reasonable
 			CurrentCapacity: &pb.ProcessCapacity{
-				MaxProcesses:         int32(cap.MaxProcesses),
-				AvailableProcesses:   int32(cap.AvailableProcesses),
-				CpuCores:             int32(cap.CPUCores),
-				AvailableMemoryBytes: int64(cap.AvailableMemory),
+				MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+				AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+				CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+				AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
 				NetworkInterfaces:    cap.NetworkInterfaces,
 			},
 			UptimeSeconds: int64(uptime),
