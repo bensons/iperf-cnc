@@ -59,7 +59,7 @@ func newRunCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
+	cmd.Flags().StringVarP(&configPath, "config", "c", "./controller.yaml",
 		"path to configuration file")
 	if err := cmd.MarkFlagRequired("config"); err != nil {
 		panic(err) // This should never happen during initialization
@@ -79,7 +79,7 @@ func newValidateCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
+	cmd.Flags().StringVarP(&configPath, "config", "c", "./controller.yaml",
 		"path to configuration file")
 	if err := cmd.MarkFlagRequired("config"); err != nil {
 		panic(err) // This should never happen during initialization
@@ -99,7 +99,7 @@ func newStatusCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", "controller.yaml",
+	cmd.Flags().StringVarP(&configPath, "config", "c", "./controller.yaml",
 		"path to configuration file")
 	if err := cmd.MarkFlagRequired("config"); err != nil {
 		panic(err) // This should never happen during initialization

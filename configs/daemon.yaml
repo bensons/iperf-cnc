@@ -6,7 +6,7 @@ daemon:
   max_processes: 200
   cpu_affinity: true
   log_level: info
-  result_dir: /var/lib/iperf-cnc/results
+  result_dir: ./results
   timeout:
     process_start_seconds: 30
     process_stop_seconds: 10

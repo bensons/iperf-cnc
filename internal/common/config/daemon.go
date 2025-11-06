@@ -117,7 +117,7 @@ func (c *DaemonConfig) SetDefaults() {
 	}
 
 	if c.Daemon.ResultDir == "" {
-		c.Daemon.ResultDir = "/var/lib/iperf-cnc/results"
+		c.Daemon.ResultDir = "./results"
 	}
 
 	if c.Daemon.TimeoutConfig.ProcessStart == 0 {

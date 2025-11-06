@@ -43,9 +43,9 @@ controller:
         profile: high_bandwidth
 
   output:
-    json_file: results.json
-    csv_file: results.csv
-    schema_file: schema.json
+    json_file: ./results.json
+    csv_file: ./results.csv
+    schema_file: ./schema.json
     compress: false
 
   concurrency:

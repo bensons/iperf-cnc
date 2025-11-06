@@ -43,7 +43,7 @@ for distributed network performance testing.`,
 		},
 	}
 
-	rootCmd.Flags().StringVarP(&configPath, "config", "c", "/etc/iperf-cnc/daemon.yaml",
+	rootCmd.Flags().StringVarP(&configPath, "config", "c", "./daemon.yaml",
 		"path to configuration file")
 
 	return rootCmd
