@@ -94,7 +94,7 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 	}
 
 	// Detect capacity
-	cap, err := s.capacity.DetectCapacity()
+	capacity, err := s.capacity.DetectCapacity()
 	if err != nil {
 		return &pb.InitializeResponse{
 			Success: false,
@@ -111,11 +111,11 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 			Ip:       "",                         // Will be filled by controller
 			Port:     int32(s.config.ListenPort), // #nosec G115 -- Port is validated to be in valid range
 			Capacity: &pb.ProcessCapacity{
-				MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
-				AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
-				CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
-				AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
-				NetworkInterfaces:    cap.NetworkInterfaces,
+				MaxProcesses:         int32(capacity.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+				AvailableProcesses:   int32(capacity.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+				CpuCores:             int32(capacity.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+				AvailableMemoryBytes: int64(capacity.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
+				NetworkInterfaces:    capacity.NetworkInterfaces,
 			},
 		},
 	}, nil
@@ -146,7 +146,7 @@ func (s *DaemonServer) PrepareTest(ctx context.Context, req *pb.PrepareTestReque
 	}
 
 	// Detect current capacity
-	cap, err := s.capacity.DetectCapacity()
+	capacity, err := s.capacity.DetectCapacity()
 	if err != nil {
 		return &pb.PrepareTestResponse{
 			CanHandle: false,
@@ -162,11 +162,11 @@ func (s *DaemonServer) PrepareTest(ctx context.Context, req *pb.PrepareTestReque
 			AvailableProcesses: int32(totalRequired), // #nosec G115 -- Process count is reasonable
 		},
 		AvailableCapacity: &pb.ProcessCapacity{
-			MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
-			AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
-			CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
-			AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
-			NetworkInterfaces:    cap.NetworkInterfaces,
+			MaxProcesses:         int32(capacity.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+			AvailableProcesses:   int32(capacity.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+			CpuCores:             int32(capacity.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+			AvailableMemoryBytes: int64(capacity.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
+			NetworkInterfaces:    capacity.NetworkInterfaces,
 		},
 	}, nil
 }
@@ -299,7 +299,7 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 
 // GetStatus returns current daemon health and resource usage
 func (s *DaemonServer) GetStatus(ctx context.Context, req *pb.GetStatusRequest) (*pb.GetStatusResponse, error) {
-	cap, err := s.capacity.DetectCapacity()
+	capacity, err := s.capacity.DetectCapacity()
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect capacity: %w", err)
 	}
@@ -313,11 +313,11 @@ func (s *DaemonServer) GetStatus(ctx context.Context, req *pb.GetStatusRequest) 
 			CompletedTests:   int32(s.collector.GetCompletedCount()),    // #nosec G115 -- Test count is reasonable
 			FailedTests:      int32(s.collector.GetFailedCount()),       // #nosec G115 -- Test count is reasonable
 			CurrentCapacity: &pb.ProcessCapacity{
-				MaxProcesses:         int32(cap.MaxProcesses),       // #nosec G115 -- Process count is reasonable
-				AvailableProcesses:   int32(cap.AvailableProcesses), // #nosec G115 -- Process count is reasonable
-				CpuCores:             int32(cap.CPUCores),           // #nosec G115 -- CPU core count is reasonable
-				AvailableMemoryBytes: int64(cap.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
-				NetworkInterfaces:    cap.NetworkInterfaces,
+				MaxProcesses:         int32(capacity.MaxProcesses),       // #nosec G115 -- Process count is reasonable
+				AvailableProcesses:   int32(capacity.AvailableProcesses), // #nosec G115 -- Process count is reasonable
+				CpuCores:             int32(capacity.CPUCores),           // #nosec G115 -- CPU core count is reasonable
+				AvailableMemoryBytes: int64(capacity.AvailableMemory),    // #nosec G115 -- Safe conversion to int64
+				NetworkInterfaces:    capacity.NetworkInterfaces,
 			},
 			UptimeSeconds: int64(uptime),
 			Version:       s.version,
