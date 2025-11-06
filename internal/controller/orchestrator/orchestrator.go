@@ -115,8 +115,7 @@ func (o *Orchestrator) preparePhase(ctx context.Context) error {
 	log.Println("Phase 2: Preparing test topology...")
 
 	// Generate per-node topologies
-	generator := &topology.Generator{}
-	nodeTopologies, err := generator.GenerateNodeTopologies(o.topology)
+	nodeTopologies, err := topology.GenerateNodeTopologies(o.topology)
 	if err != nil {
 		o.state = StateFailed
 		return fmt.Errorf("failed to generate node topologies: %w", err)

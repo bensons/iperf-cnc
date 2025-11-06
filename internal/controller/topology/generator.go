@@ -102,12 +102,19 @@ func (g *Generator) GenerateFullMesh() (*Topology, error) {
 }
 
 // GenerateNodeTopologies creates per-node topology assignments
-func (g *Generator) GenerateNodeTopologies(topology *Topology) (map[string]*pb.TestTopology, error) {
+func GenerateNodeTopologies(topology *Topology) (map[string]*pb.TestTopology, error) {
 	result := make(map[string]*pb.TestTopology)
 
+	// Extract unique nodes from topology
+	nodeIDs := make(map[string]bool)
+	for _, pair := range topology.Pairs {
+		nodeIDs[pair.Source.ID] = true
+		nodeIDs[pair.Destination.ID] = true
+	}
+
 	// Initialize for all nodes
-	for _, node := range g.nodes.GetAllNodes() {
-		result[node.ID] = &pb.TestTopology{
+	for nodeID := range nodeIDs {
+		result[nodeID] = &pb.TestTopology{
 			ServerAssignments: make([]*pb.TestPair, 0),
 			ClientAssignments: make([]*pb.TestPair, 0),
 		}
