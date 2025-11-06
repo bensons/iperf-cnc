@@ -90,12 +90,18 @@ func (g *Generator) GenerateFullMesh() (*Topology, error) {
 		}
 	}
 
-	// Allocate server ports (one per node for all incoming tests)
+	// Allocate server ports - each node needs one port per incoming connection
+	// For a full mesh with N nodes, each node receives N-1 incoming connections
 	portCounter := int32(5201) // Starting port
 	for _, node := range nodes {
-		// Each node needs to run a server for incoming tests
-		topology.ServerPorts[node.ID] = []int32{portCounter}
-		portCounter++
+		// Allocate N-1 ports for this node (one for each potential source)
+		numPorts := len(nodes) - 1
+		ports := make([]int32, numPorts)
+		for i := 0; i < numPorts; i++ {
+			ports[i] = portCounter
+			portCounter++
+		}
+		topology.ServerPorts[node.ID] = ports
 	}
 
 	return topology, nil
@@ -121,17 +127,37 @@ func GenerateNodeTopologies(topology *Topology) (map[string]*pb.TestTopology, er
 	}
 
 	// Build server assignments
+	// Each destination node needs to map each source node to a unique port
 	for nodeID, ports := range topology.ServerPorts {
 		if len(ports) == 0 {
 			continue
 		}
 
-		// For now, each node runs one server on its allocated port
-		port := ports[0]
+		// Create a mapping from source node ID to port index
+		// We need to assign ports consistently across server and client assignments
+		sourceNodes := make([]string, 0)
+		for _, pair := range topology.Pairs {
+			if pair.Destination.ID == nodeID {
+				sourceNodes = append(sourceNodes, pair.Source.ID)
+			}
+		}
+
+		// Create source -> port mapping
+		sourceToPort := make(map[string]int32)
+		for i, sourceID := range sourceNodes {
+			if i < len(ports) {
+				sourceToPort[sourceID] = ports[i]
+			}
+		}
 
 		// Find all tests where this node is the destination
 		for _, pair := range topology.Pairs {
 			if pair.Destination.ID == nodeID {
+				port, exists := sourceToPort[pair.Source.ID]
+				if !exists {
+					return nil, fmt.Errorf("no port allocated for source %s -> dest %s", pair.Source.ID, nodeID)
+				}
+
 				result[nodeID].ServerAssignments = append(result[nodeID].ServerAssignments, &pb.TestPair{
 					SourceId:        pair.Source.ID,
 					DestinationId:   pair.Destination.ID,
@@ -144,19 +170,42 @@ func GenerateNodeTopologies(topology *Topology) (map[string]*pb.TestTopology, er
 	}
 
 	// Build client assignments
+	// Each client needs to connect to the port assigned for its source->dest pair
 	for nodeID, pairs := range topology.ClientTests {
 		for _, pair := range pairs {
-			// Get the server port for the destination
+			// Get the server ports for the destination
 			destPorts := topology.ServerPorts[pair.Destination.ID]
 			if len(destPorts) == 0 {
 				return nil, fmt.Errorf("no server port allocated for node %s", pair.Destination.ID)
+			}
+
+			// Find which port this source should use on the destination
+			// We need to find the index of this source in the destination's source list
+			sourceNodes := make([]string, 0)
+			for _, p := range topology.Pairs {
+				if p.Destination.ID == pair.Destination.ID {
+					sourceNodes = append(sourceNodes, p.Source.ID)
+				}
+			}
+
+			// Find the index of this source
+			portIndex := -1
+			for i, sourceID := range sourceNodes {
+				if sourceID == pair.Source.ID {
+					portIndex = i
+					break
+				}
+			}
+
+			if portIndex < 0 || portIndex >= len(destPorts) {
+				return nil, fmt.Errorf("no port index found for source %s -> dest %s", pair.Source.ID, pair.Destination.ID)
 			}
 
 			result[nodeID].ClientAssignments = append(result[nodeID].ClientAssignments, &pb.TestPair{
 				SourceId:        pair.Source.ID,
 				DestinationId:   pair.Destination.ID,
 				DestinationIp:   pair.Destination.IP,
-				DestinationPort: destPorts[0],
+				DestinationPort: destPorts[portIndex],
 				Profile:         ConvertProfileToProto(pair.Profile),
 			})
 		}
