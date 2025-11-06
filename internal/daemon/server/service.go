@@ -58,15 +58,15 @@ func NewDaemonServer(config *Config) (*DaemonServer, error) {
 	// Create capacity calculator
 	capacityCalc := process.NewCapacityCalculator(config.MaxProcesses)
 
+	// Create result collector
+	resultCollector := collector.NewCollector(config.ResultDir)
+
 	// Create process manager
 	iperfPath := config.IperfPath
 	if iperfPath == "" {
 		iperfPath = "iperf3"
 	}
-	processManager := process.NewManager(portAllocator, capacityCalc, iperfPath)
-
-	// Create result collector
-	resultCollector := collector.NewCollector(config.ResultDir)
+	processManager := process.NewManager(portAllocator, capacityCalc, resultCollector, iperfPath)
 
 	// Get hostname
 	hostname, err := os.Hostname()

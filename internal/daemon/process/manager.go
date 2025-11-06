@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bensons/iperf-cnc/internal/common/iperf"
+	"github.com/bensons/iperf-cnc/internal/daemon/collector"
 	"github.com/bensons/iperf-cnc/internal/daemon/port"
 )
 
@@ -27,6 +28,7 @@ type Manager struct {
 	portAllocator *port.Allocator
 	capacity      *CapacityCalculator
 	iperf         *iperf.Wrapper
+	collector     *collector.Collector
 	processes     map[string]*ProcessInfo // testID -> ProcessInfo
 	servers       map[int]*ProcessInfo    // port -> ProcessInfo for servers
 	mu            sync.RWMutex
@@ -34,11 +36,12 @@ type Manager struct {
 }
 
 // NewManager creates a new process manager
-func NewManager(portAllocator *port.Allocator, capacity *CapacityCalculator, iperfPath string) *Manager {
+func NewManager(portAllocator *port.Allocator, capacity *CapacityCalculator, resultCollector *collector.Collector, iperfPath string) *Manager {
 	return &Manager{
 		portAllocator: portAllocator,
 		capacity:      capacity,
 		iperf:         iperf.NewWrapper(iperfPath),
+		collector:     resultCollector,
 		processes:     make(map[string]*ProcessInfo),
 		servers:       make(map[int]*ProcessInfo),
 		iperfPath:     iperfPath,
@@ -276,12 +279,26 @@ func (m *Manager) monitorProcess(processInfo *ProcessInfo) {
 func (m *Manager) runClient(ctx context.Context, processInfo *ProcessInfo, config *iperf.Config) {
 	result, err := m.iperf.Run(ctx, config)
 
+	// Store result in collector
+	if m.collector != nil {
+		if err != nil {
+			// Store error result
+			_ = m.collector.StoreIperfResult(processInfo.TestID, &iperf.Result{
+				Success:    false,
+				Error:      err.Error(),
+				StartTime:  processInfo.StartTime,
+				EndTime:    time.Now(),
+				ExitCode:   -1,
+				JSONOutput: "",
+			})
+		} else if result != nil {
+			// Store successful result
+			_ = m.collector.StoreIperfResult(processInfo.TestID, result)
+		}
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	// Store result (implementation in collector)
-	_ = result
-	_ = err
 
 	// Clean up
 	delete(m.processes, processInfo.TestID)
