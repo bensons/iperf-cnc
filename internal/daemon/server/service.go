@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -28,7 +29,8 @@ type DaemonServer struct {
 	startTime time.Time
 
 	// Configuration
-	config *Config
+	config      *Config
+	saveResults bool // Whether to save results to timestamped files
 }
 
 // Config contains daemon server configuration
@@ -92,6 +94,9 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 	if req.MaxProcesses > 0 {
 		s.config.MaxProcesses = int(req.MaxProcesses)
 	}
+
+	// Update save results flag
+	s.saveResults = req.SaveResults
 
 	// Detect capacity
 	capacity, err := s.capacity.DetectCapacity()
@@ -286,6 +291,14 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 		})
 	}
 
+	// Save results to timestamped file if enabled
+	if s.saveResults && len(results) > 0 {
+		if err := s.saveResultsToFile(results); err != nil {
+			// Log error but don't fail the request
+			fmt.Printf("Warning: failed to save results to file: %v\n", err)
+		}
+	}
+
 	// Clear results if requested
 	if req.ClearAfterRetrieval {
 		s.collector.ClearAll()
@@ -353,4 +366,38 @@ func convertProfileToIperfConfig(profile *pb.TestProfile) *iperf.Config {
 		ZeroCopy:          profile.Zerocopy,
 		OmitSeconds:       int(profile.OmitSeconds),
 	}
+}
+
+// saveResultsToFile saves results to a timestamped JSON file
+func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) error {
+	// Create filename with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("daemon_results_%s_%s.json", s.hostname, timestamp)
+
+	// Use result directory if configured
+	if s.config.ResultDir != "" {
+		filename = fmt.Sprintf("%s/%s", s.config.ResultDir, filename)
+	}
+
+	// Create file
+	file, err := os.Create(filename) // #nosec G304 -- Filename is generated internally
+	if err != nil {
+		return fmt.Errorf("failed to create results file: %w", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Printf("Warning: failed to close results file: %v\n", err)
+		}
+	}()
+
+	// Write JSON
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+
+	if err := encoder.Encode(results); err != nil {
+		return fmt.Errorf("failed to encode results: %w", err)
+	}
+
+	fmt.Printf("Saved %d results to %s\n", len(results), filename)
+	return nil
 }

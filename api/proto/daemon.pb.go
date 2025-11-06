@@ -794,6 +794,7 @@ type InitializeRequest struct {
 	CpuAffinity    bool                   `protobuf:"varint,4,opt,name=cpu_affinity,json=cpuAffinity,proto3" json:"cpu_affinity,omitempty"`
 	LogLevel       string                 `protobuf:"bytes,5,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
 	ResultDir      string                 `protobuf:"bytes,6,opt,name=result_dir,json=resultDir,proto3" json:"result_dir,omitempty"`
+	SaveResults    bool                   `protobuf:"varint,7,opt,name=save_results,json=saveResults,proto3" json:"save_results,omitempty"` // Whether to save results to timestamped files
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -868,6 +869,13 @@ func (x *InitializeRequest) GetResultDir() string {
 		return x.ResultDir
 	}
 	return ""
+}
+
+func (x *InitializeRequest) GetSaveResults() bool {
+	if x != nil {
+		return x.SaveResults
+	}
+	return false
 }
 
 type InitializeResponse struct {
@@ -1700,7 +1708,7 @@ const file_api_proto_daemon_proto_rawDesc = "" +
 	"\ffailed_tests\x18\x04 \x01(\x05R\vfailedTests\x12K\n" +
 	"\x10current_capacity\x18\x05 \x01(\v2 .iperf.daemon.v1.ProcessCapacityR\x0fcurrentCapacity\x12%\n" +
 	"\x0euptime_seconds\x18\x06 \x01(\x03R\ruptimeSeconds\x12\x18\n" +
-	"\aversion\x18\a \x01(\tR\aversion\"\xe7\x01\n" +
+	"\aversion\x18\a \x01(\tR\aversion\"\x8a\x02\n" +
 	"\x11InitializeRequest\x12(\n" +
 	"\x10port_range_start\x18\x01 \x01(\x05R\x0eportRangeStart\x12$\n" +
 	"\x0eport_range_end\x18\x02 \x01(\x05R\fportRangeEnd\x12#\n" +
@@ -1708,7 +1716,8 @@ const file_api_proto_daemon_proto_rawDesc = "" +
 	"\fcpu_affinity\x18\x04 \x01(\bR\vcpuAffinity\x12\x1b\n" +
 	"\tlog_level\x18\x05 \x01(\tR\blogLevel\x12\x1d\n" +
 	"\n" +
-	"result_dir\x18\x06 \x01(\tR\tresultDir\"\x80\x01\n" +
+	"result_dir\x18\x06 \x01(\tR\tresultDir\x12!\n" +
+	"\fsave_results\x18\a \x01(\bR\vsaveResults\"\x80\x01\n" +
 	"\x12InitializeResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x126\n" +

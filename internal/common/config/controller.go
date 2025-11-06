@@ -66,10 +66,13 @@ type TopologyOverride struct {
 
 // OutputConfig defines output settings
 type OutputConfig struct {
-	JSONFile   string `yaml:"json_file"`
-	CSVFile    string `yaml:"csv_file,omitempty"`
-	SchemaFile string `yaml:"schema_file,omitempty"`
-	Compress   bool   `yaml:"compress"`
+	JSONFile          string `yaml:"json_file"`
+	CSVFile           string `yaml:"csv_file,omitempty"`
+	SchemaFile        string `yaml:"schema_file,omitempty"`
+	Compress          bool   `yaml:"compress"`
+	SaveDaemonResults bool   `yaml:"save_daemon_results"`        // Instruct daemons to save local copies
+	SaveRawResults    bool   `yaml:"save_raw_results"`           // Save raw results from all daemons
+	RawResultsFile    string `yaml:"raw_results_file,omitempty"` // File for raw results (default: raw_results_<timestamp>.json)
 }
 
 // ConcurrencyConfig controls parallelism and batching

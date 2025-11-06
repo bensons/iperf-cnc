@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	pb "github.com/bensons/iperf-cnc/api/proto"
 	"github.com/bensons/iperf-cnc/internal/common/config"
 	"github.com/bensons/iperf-cnc/internal/common/models"
 	"github.com/bensons/iperf-cnc/internal/controller/aggregator"
@@ -222,7 +224,7 @@ func runTest(configPath string) error {
 
 	// Execute test
 	log.Println("\nStarting test execution...")
-	orch := orchestrator.NewOrchestrator(pool)
+	orch := orchestrator.NewOrchestrator(pool, cfg.Controller.Output.SaveDaemonResults)
 	if err := orch.ExecuteTest(ctx, topo); err != nil {
 		return fmt.Errorf("test execution failed: %w", err)
 	}
@@ -239,6 +241,13 @@ func runTest(configPath string) error {
 
 	log.Printf("Collected %d results", len(results))
 	log.Printf("Completed: %d, Failed: %d", summary.CompletedTests, summary.FailedTests)
+
+	// Save raw results if enabled
+	if cfg.Controller.Output.SaveRawResults {
+		if err := saveRawResults(ctx, pool, cfg.Controller.Output.RawResultsFile); err != nil {
+			log.Printf("Warning: failed to save raw results: %v", err)
+		}
+	}
 
 	// Write outputs
 	log.Println("\nWriting output files...")
@@ -361,5 +370,58 @@ func checkStatus(configPath string) error {
 		fmt.Println()
 	}
 
+	return nil
+}
+
+// saveRawResults saves raw results from all daemons to a timestamped file
+func saveRawResults(ctx context.Context, pool *client.Pool, filename string) error {
+	// Generate filename if not provided
+	if filename == "" {
+		timestamp := time.Now().Format("20060102_150405")
+		filename = fmt.Sprintf("raw_results_%s.json", timestamp)
+	}
+
+	// Collect raw results from all daemons
+	clients := pool.GetAllClients()
+	allResults := make(map[string]interface{})
+
+	for _, c := range clients {
+		req := &pb.GetResultsRequest{
+			ClearAfterRetrieval: false, // Don't clear - already collected by aggregator
+		}
+
+		resp, err := c.Client.GetResults(ctx, req)
+		if err != nil {
+			log.Printf("Warning: failed to get raw results from node %s: %v", c.Node.ID, err)
+			continue
+		}
+
+		// Store results for this node
+		allResults[c.Node.ID] = map[string]interface{}{
+			"total_count": resp.TotalCount,
+			"results":     resp.Results,
+		}
+	}
+
+	// Create file
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create raw results file: %w", err)
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("Warning: failed to close raw results file: %v", err)
+		}
+	}()
+
+	// Write JSON
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+
+	if err := encoder.Encode(allResults); err != nil {
+		return fmt.Errorf("failed to encode raw results: %w", err)
+	}
+
+	log.Printf("Saved raw results from %d nodes to %s", len(allResults), filename)
 	return nil
 }

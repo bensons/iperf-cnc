@@ -131,6 +131,7 @@ message InitializeRequest {
   bool cpu_affinity = 4;
   string log_level = 5;
   string result_dir = 6;
+  bool save_results = 7; // Whether to save results to timestamped files
 }
 
 message InitializeResponse {

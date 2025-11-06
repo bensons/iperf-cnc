@@ -28,18 +28,20 @@ const (
 
 // Orchestrator manages the execution of distributed tests
 type Orchestrator struct {
-	clientPool *client.Pool
-	topology   *topology.Topology
-	state      TestState
-	errors     []error
+	clientPool        *client.Pool
+	topology          *topology.Topology
+	state             TestState
+	errors            []error
+	saveDaemonResults bool
 }
 
 // NewOrchestrator creates a new test orchestrator
-func NewOrchestrator(clientPool *client.Pool) *Orchestrator {
+func NewOrchestrator(clientPool *client.Pool, saveDaemonResults bool) *Orchestrator {
 	return &Orchestrator{
-		clientPool: clientPool,
-		state:      StateInit,
-		errors:     make([]error, 0),
+		clientPool:        clientPool,
+		state:             StateInit,
+		errors:            make([]error, 0),
+		saveDaemonResults: saveDaemonResults,
 	}
 }
 
@@ -98,6 +100,7 @@ func (o *Orchestrator) initializePhase(ctx context.Context) error {
 	req := &pb.InitializeRequest{
 		MaxProcesses: 200,
 		LogLevel:     "info",
+		SaveResults:  o.saveDaemonResults,
 	}
 
 	if err := o.clientPool.Initialize(ctx, req); err != nil {
@@ -106,6 +109,9 @@ func (o *Orchestrator) initializePhase(ctx context.Context) error {
 	}
 
 	log.Printf("Successfully initialized %d daemons", o.clientPool.Count())
+	if o.saveDaemonResults {
+		log.Println("Daemons will save local copies of results")
+	}
 	return nil
 }
 
