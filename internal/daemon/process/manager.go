@@ -33,8 +33,6 @@ type Manager struct {
 	servers       map[int]*ProcessInfo    // port -> ProcessInfo for servers
 	mu            sync.RWMutex
 	iperfPath     string
-	saveResults   bool   // Whether to save iperf3 results to files
-	resultDir     string // Directory for result files
 }
 
 // NewManager creates a new process manager
@@ -47,17 +45,7 @@ func NewManager(portAllocator *port.Allocator, capacity *CapacityCalculator, res
 		processes:     make(map[string]*ProcessInfo),
 		servers:       make(map[int]*ProcessInfo),
 		iperfPath:     iperfPath,
-		saveResults:   false,
-		resultDir:     "",
 	}
-}
-
-// SetSaveResults configures whether to save iperf3 results to files
-func (m *Manager) SetSaveResults(save bool, resultDir string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.saveResults = save
-	m.resultDir = resultDir
 }
 
 // StartServer starts an iperf3 server on the specified port
@@ -78,18 +66,14 @@ func (m *Manager) StartServer(port int) error {
 	// Create context for the server
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Generate logfile path if saving is enabled
-	// Note: It's OK to use --logfile for servers because:
-	// 1. Servers run in one-off mode (-1 flag) and handle one connection
-	// 2. Server JSON output is not collected by the daemon (only client results matter)
-	// 3. This allows us to save server-side statistics if needed for debugging
-	var logFile string
-	if m.saveResults {
-		logFile = m.generateLogFilePath(fmt.Sprintf("server-%d", port))
-	}
+	// Note: Do NOT use --logfile for servers because:
+	// 1. iperf3 --logfile may cause servers to fail or behave unexpectedly
+	// 2. Server JSON output is not needed (only client results matter for test results)
+	// 3. Using --logfile was causing most servers to fail with exit code 1
+	// If server-side logging is needed, use iperf3's syslog or other mechanisms
 
-	// Start the server
-	cmd, err := m.iperf.RunServer(ctx, port, logFile)
+	// Start the server (without logfile)
+	cmd, err := m.iperf.RunServer(ctx, port, "")
 	if err != nil {
 		m.capacity.ReleaseSlots(1)
 		cancel()
@@ -331,19 +315,4 @@ func (m *Manager) runClient(ctx context.Context, processInfo *ProcessInfo, confi
 	// Clean up
 	delete(m.processes, processInfo.TestID)
 	m.capacity.ReleaseSlots(1)
-}
-
-// generateLogFilePath generates a unique log file path for a test
-func (m *Manager) generateLogFilePath(testID string) string {
-	// Use result directory if configured, otherwise current directory
-	dir := m.resultDir
-	if dir == "" {
-		dir = "."
-	}
-
-	// Generate filename with timestamp and test ID
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("%s/iperf3_%s_%s.json", dir, testID, timestamp)
-
-	return filename
 }

@@ -97,18 +97,10 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 	// Update save results flag
 	s.saveResults = req.SaveResults
 
-	// Configure process manager to save results using iperf3's --logfile
-	s.processManager.SetSaveResults(req.SaveResults, s.config.ResultDir)
-
-	// Create result directory if saving is enabled
-	if req.SaveResults && s.config.ResultDir != "" {
-		if err := os.MkdirAll(s.config.ResultDir, 0750); err != nil {
-			return &pb.InitializeResponse{
-				Success: false,
-				Message: fmt.Sprintf("failed to create result directory: %v", err),
-			}, nil
-		}
-	}
+	// Note: save_daemon_results flag is no longer used for iperf3 --logfile
+	// because it caused test failures. The daemon always collects results
+	// from iperf3 stdout and returns them to the controller.
+	// If you need to save results, use save_raw_results on the controller side.
 
 	// Detect capacity
 	capacity, err := s.capacity.DetectCapacity()
