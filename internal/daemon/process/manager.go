@@ -79,6 +79,10 @@ func (m *Manager) StartServer(port int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Generate logfile path if saving is enabled
+	// Note: It's OK to use --logfile for servers because:
+	// 1. Servers run in one-off mode (-1 flag) and handle one connection
+	// 2. Server JSON output is not collected by the daemon (only client results matter)
+	// 3. This allows us to save server-side statistics if needed for debugging
 	var logFile string
 	if m.saveResults {
 		logFile = m.generateLogFilePath(fmt.Sprintf("server-%d", port))
@@ -132,10 +136,11 @@ func (m *Manager) StartClient(testID, host string, port int, config *iperf.Confi
 	config.Host = host
 	config.Port = port
 
-	// Set logfile if saving is enabled
-	if m.saveResults {
-		config.LogFile = m.generateLogFilePath(testID)
-	}
+	// Note: Do NOT use --logfile for client tests because:
+	// 1. iperf3 writes JSON to the file instead of stdout
+	// 2. The daemon needs to collect JSON from stdout to return results to controller
+	// 3. Using --logfile would cause all tests to fail with empty JSON output
+	// Server tests can use --logfile since they don't need to return JSON results
 
 	// Create context with timeout
 	timeout := time.Duration(config.Duration+30) * time.Second // Add buffer
