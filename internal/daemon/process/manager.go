@@ -33,6 +33,8 @@ type Manager struct {
 	servers       map[int]*ProcessInfo    // port -> ProcessInfo for servers
 	mu            sync.RWMutex
 	iperfPath     string
+	saveResults   bool   // Whether to save iperf3 results to files
+	resultDir     string // Directory for result files
 }
 
 // NewManager creates a new process manager
@@ -45,7 +47,17 @@ func NewManager(portAllocator *port.Allocator, capacity *CapacityCalculator, res
 		processes:     make(map[string]*ProcessInfo),
 		servers:       make(map[int]*ProcessInfo),
 		iperfPath:     iperfPath,
+		saveResults:   false,
+		resultDir:     "",
 	}
+}
+
+// SetSaveResults configures whether to save iperf3 results to files
+func (m *Manager) SetSaveResults(save bool, resultDir string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.saveResults = save
+	m.resultDir = resultDir
 }
 
 // StartServer starts an iperf3 server on the specified port
@@ -66,8 +78,14 @@ func (m *Manager) StartServer(port int) error {
 	// Create context for the server
 	ctx, cancel := context.WithCancel(context.Background())
 
+	// Generate logfile path if saving is enabled
+	var logFile string
+	if m.saveResults {
+		logFile = m.generateLogFilePath(fmt.Sprintf("server-%d", port))
+	}
+
 	// Start the server
-	cmd, err := m.iperf.RunServer(ctx, port)
+	cmd, err := m.iperf.RunServer(ctx, port, logFile)
 	if err != nil {
 		m.capacity.ReleaseSlots(1)
 		cancel()
@@ -113,6 +131,11 @@ func (m *Manager) StartClient(testID, host string, port int, config *iperf.Confi
 	config.Mode = iperf.ModeClient
 	config.Host = host
 	config.Port = port
+
+	// Set logfile if saving is enabled
+	if m.saveResults {
+		config.LogFile = m.generateLogFilePath(testID)
+	}
 
 	// Create context with timeout
 	timeout := time.Duration(config.Duration+30) * time.Second // Add buffer
@@ -303,4 +326,19 @@ func (m *Manager) runClient(ctx context.Context, processInfo *ProcessInfo, confi
 	// Clean up
 	delete(m.processes, processInfo.TestID)
 	m.capacity.ReleaseSlots(1)
+}
+
+// generateLogFilePath generates a unique log file path for a test
+func (m *Manager) generateLogFilePath(testID string) string {
+	// Use result directory if configured, otherwise current directory
+	dir := m.resultDir
+	if dir == "" {
+		dir = "."
+	}
+
+	// Generate filename with timestamp and test ID
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s/iperf3_%s_%s.json", dir, testID, timestamp)
+
+	return filename
 }

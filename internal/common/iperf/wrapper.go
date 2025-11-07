@@ -48,6 +48,7 @@ type Config struct {
 	TOS               int
 	ZeroCopy          bool
 	OmitSeconds       int
+	LogFile           string // Path to save iperf3 output (--logfile)
 	ExtraArgs         []string
 }
 
@@ -174,6 +175,11 @@ func (w *Wrapper) BuildCommand(config *Config) ([]string, error) {
 	// JSON output
 	args = append(args, "-J")
 
+	// Log file (both modes)
+	if config.LogFile != "" {
+		args = append(args, "--logfile", config.LogFile)
+	}
+
 	// One-off mode for servers
 	if config.Mode == ModeServer {
 		args = append(args, "-1")
@@ -235,11 +241,16 @@ func (w *Wrapper) Run(ctx context.Context, config *Config) (*Result, error) {
 }
 
 // RunServer starts an iperf3 server that runs until context is cancelled
-func (w *Wrapper) RunServer(ctx context.Context, port int) (*exec.Cmd, error) {
+func (w *Wrapper) RunServer(ctx context.Context, port int, logFile string) (*exec.Cmd, error) {
 	args := []string{
 		"-s",
 		"-p", fmt.Sprintf("%d", port),
 		"-J",
+	}
+
+	// Add logfile if specified
+	if logFile != "" {
+		args = append(args, "--logfile", logFile)
 	}
 
 	cmd := exec.CommandContext(ctx, w.iperfPath, args...) // #nosec G204 -- iperf3 path is controlled, args are validated

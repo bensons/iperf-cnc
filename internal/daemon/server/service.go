@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"time"
@@ -97,6 +96,19 @@ func (s *DaemonServer) Initialize(ctx context.Context, req *pb.InitializeRequest
 
 	// Update save results flag
 	s.saveResults = req.SaveResults
+
+	// Configure process manager to save results using iperf3's --logfile
+	s.processManager.SetSaveResults(req.SaveResults, s.config.ResultDir)
+
+	// Create result directory if saving is enabled
+	if req.SaveResults && s.config.ResultDir != "" {
+		if err := os.MkdirAll(s.config.ResultDir, 0750); err != nil {
+			return &pb.InitializeResponse{
+				Success: false,
+				Message: fmt.Sprintf("failed to create result directory: %v", err),
+			}, nil
+		}
+	}
 
 	// Detect capacity
 	capacity, err := s.capacity.DetectCapacity()
@@ -291,19 +303,8 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 		})
 	}
 
-	// Save results to timestamped file if enabled (in background to avoid blocking)
-	if s.saveResults && len(results) > 0 {
-		// Make a copy of results for background saving
-		resultsCopy := make([]*collector.TestResult, len(results))
-		copy(resultsCopy, results)
-
-		go func() {
-			if err := s.saveResultsToFile(resultsCopy); err != nil {
-				// Log error but don't fail the request
-				fmt.Printf("Warning: failed to save results to file: %v\n", err)
-			}
-		}()
-	}
+	// Note: When save_daemon_results is enabled, iperf3 saves results directly
+	// to files using --logfile option. No need to save here.
 
 	// Clear results if requested
 	if req.ClearAfterRetrieval {
@@ -372,49 +373,4 @@ func convertProfileToIperfConfig(profile *pb.TestProfile) *iperf.Config {
 		ZeroCopy:          profile.Zerocopy,
 		OmitSeconds:       int(profile.OmitSeconds),
 	}
-}
-
-// saveResultsToFile saves results to a timestamped JSON file
-func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) (err error) {
-	// Add panic recovery to prevent crashes during file I/O
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("panic during file save: %v", r)
-			fmt.Printf("ERROR: Panic while saving results: %v\n", r)
-		}
-	}()
-
-	// Create filename with timestamp
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("daemon_results_%s_%s.json", s.hostname, timestamp)
-
-	// Use result directory if configured
-	if s.config.ResultDir != "" {
-		// Ensure directory exists
-		if mkdirErr := os.MkdirAll(s.config.ResultDir, 0750); mkdirErr != nil {
-			return fmt.Errorf("failed to create result directory: %w", mkdirErr)
-		}
-		filename = fmt.Sprintf("%s/%s", s.config.ResultDir, filename)
-	}
-
-	// Create file
-	file, err := os.Create(filename) // #nosec G304 -- Filename is generated internally
-	if err != nil {
-		return fmt.Errorf("failed to create results file: %w", err)
-	}
-	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			fmt.Printf("Warning: failed to close results file: %v\n", closeErr)
-		}
-	}()
-
-	// Write JSON without indentation to save memory
-	encoder := json.NewEncoder(file)
-
-	if encodeErr := encoder.Encode(results); encodeErr != nil {
-		return fmt.Errorf("failed to encode results: %w", encodeErr)
-	}
-
-	fmt.Printf("Saved %d results to %s\n", len(results), filename)
-	return nil
 }
