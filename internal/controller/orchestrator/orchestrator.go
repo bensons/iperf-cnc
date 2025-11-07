@@ -2,8 +2,10 @@ package orchestrator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	pb "github.com/bensons/iperf-cnc/api/proto"
@@ -33,15 +35,19 @@ type Orchestrator struct {
 	state             TestState
 	errors            []error
 	saveDaemonResults bool
+	saveRawResults    bool
+	rawResultsDir     string
 }
 
 // NewOrchestrator creates a new test orchestrator
-func NewOrchestrator(clientPool *client.Pool, saveDaemonResults bool) *Orchestrator {
+func NewOrchestrator(clientPool *client.Pool, saveDaemonResults bool, saveRawResults bool, rawResultsDir string) *Orchestrator {
 	return &Orchestrator{
 		clientPool:        clientPool,
 		state:             StateInit,
 		errors:            make([]error, 0),
 		saveDaemonResults: saveDaemonResults,
+		saveRawResults:    saveRawResults,
+		rawResultsDir:     rawResultsDir,
 	}
 }
 
@@ -299,13 +305,20 @@ func (o *Orchestrator) waitPhase(ctx context.Context) error {
 	return nil
 }
 
-// collectPhase verifies results are ready on all nodes
+// collectPhase verifies results are ready on all nodes and optionally saves raw results
 func (o *Orchestrator) collectPhase(ctx context.Context) error {
 	o.state = StateCollecting
 	log.Println("Phase 6: Collecting results...")
 
 	clients := o.clientPool.GetAllClients()
 	totalResults := 0
+
+	// Create result directory if saving raw results
+	if o.saveRawResults && o.rawResultsDir != "" {
+		if err := os.MkdirAll(o.rawResultsDir, 0750); err != nil {
+			log.Printf("Warning: failed to create raw results directory: %v", err)
+		}
+	}
 
 	for _, c := range clients {
 		req := &pb.GetResultsRequest{
@@ -320,6 +333,13 @@ func (o *Orchestrator) collectPhase(ctx context.Context) error {
 
 		totalResults += int(resp.TotalCount)
 		log.Printf("Node %s: collected %d results", c.Node.ID, resp.TotalCount)
+
+		// Save raw results to individual file if enabled
+		if o.saveRawResults {
+			if saveErr := o.saveNodeRawResults(c.Node.ID, resp); saveErr != nil {
+				log.Printf("Warning: failed to save raw results for node %s: %v", c.Node.ID, saveErr)
+			}
+		}
 	}
 
 	log.Printf("Collected %d total results", totalResults)
@@ -346,4 +366,46 @@ func (o *Orchestrator) GetState() TestState {
 // GetErrors returns any errors encountered during execution
 func (o *Orchestrator) GetErrors() []error {
 	return o.errors
+}
+
+// saveNodeRawResults saves raw results from a single node to a file
+func (o *Orchestrator) saveNodeRawResults(nodeID string, resp *pb.GetResultsResponse) error {
+	// Generate filename with node ID and timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("raw_results_%s_%s.json", nodeID, timestamp)
+
+	// Use result directory if configured
+	if o.rawResultsDir != "" {
+		filename = fmt.Sprintf("%s/%s", o.rawResultsDir, filename)
+	}
+
+	// Create file
+	file, err := os.Create(filename) // #nosec G304 -- Filename is generated internally
+	if err != nil {
+		return fmt.Errorf("failed to create raw results file: %w", err)
+	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			log.Printf("Warning: failed to close raw results file: %v", closeErr)
+		}
+	}()
+
+	// Prepare data structure
+	data := map[string]any{
+		"node_id":     nodeID,
+		"timestamp":   timestamp,
+		"total_count": resp.TotalCount,
+		"results":     resp.Results,
+	}
+
+	// Write JSON with indentation for readability
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+
+	if err := encoder.Encode(data); err != nil {
+		return fmt.Errorf("failed to encode raw results: %w", err)
+	}
+
+	log.Printf("Saved raw results for node %s to %s", nodeID, filename)
+	return nil
 }
