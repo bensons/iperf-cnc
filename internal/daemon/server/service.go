@@ -291,12 +291,18 @@ func (s *DaemonServer) GetResults(ctx context.Context, req *pb.GetResultsRequest
 		})
 	}
 
-	// Save results to timestamped file if enabled
+	// Save results to timestamped file if enabled (in background to avoid blocking)
 	if s.saveResults && len(results) > 0 {
-		if err := s.saveResultsToFile(results); err != nil {
-			// Log error but don't fail the request
-			fmt.Printf("Warning: failed to save results to file: %v\n", err)
-		}
+		// Make a copy of results for background saving
+		resultsCopy := make([]*collector.TestResult, len(results))
+		copy(resultsCopy, results)
+
+		go func() {
+			if err := s.saveResultsToFile(resultsCopy); err != nil {
+				// Log error but don't fail the request
+				fmt.Printf("Warning: failed to save results to file: %v\n", err)
+			}
+		}()
 	}
 
 	// Clear results if requested
@@ -369,7 +375,15 @@ func convertProfileToIperfConfig(profile *pb.TestProfile) *iperf.Config {
 }
 
 // saveResultsToFile saves results to a timestamped JSON file
-func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) error {
+func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) (err error) {
+	// Add panic recovery to prevent crashes during file I/O
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic during file save: %v", r)
+			fmt.Printf("ERROR: Panic while saving results: %v\n", r)
+		}
+	}()
+
 	// Create filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("daemon_results_%s_%s.json", s.hostname, timestamp)
@@ -377,8 +391,8 @@ func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) error 
 	// Use result directory if configured
 	if s.config.ResultDir != "" {
 		// Ensure directory exists
-		if err := os.MkdirAll(s.config.ResultDir, 0750); err != nil {
-			return fmt.Errorf("failed to create result directory: %w", err)
+		if mkdirErr := os.MkdirAll(s.config.ResultDir, 0750); mkdirErr != nil {
+			return fmt.Errorf("failed to create result directory: %w", mkdirErr)
 		}
 		filename = fmt.Sprintf("%s/%s", s.config.ResultDir, filename)
 	}
@@ -389,17 +403,16 @@ func (s *DaemonServer) saveResultsToFile(results []*collector.TestResult) error 
 		return fmt.Errorf("failed to create results file: %w", err)
 	}
 	defer func() {
-		if err := file.Close(); err != nil {
-			fmt.Printf("Warning: failed to close results file: %v\n", err)
+		if closeErr := file.Close(); closeErr != nil {
+			fmt.Printf("Warning: failed to close results file: %v\n", closeErr)
 		}
 	}()
 
-	// Write JSON
+	// Write JSON without indentation to save memory
 	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
 
-	if err := encoder.Encode(results); err != nil {
-		return fmt.Errorf("failed to encode results: %w", err)
+	if encodeErr := encoder.Encode(results); encodeErr != nil {
+		return fmt.Errorf("failed to encode results: %w", encodeErr)
 	}
 
 	fmt.Printf("Saved %d results to %s\n", len(results), filename)
